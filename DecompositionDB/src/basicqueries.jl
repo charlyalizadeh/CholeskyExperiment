@@ -1,41 +1,5 @@
 using Mongoc
 
-"""DEBUG"""
-function construct_debug_instances(collection::Mongoc.Collection)
-    push_instance!(collection, "case1354", Mongoc.BSON("OPF" => Dict("opf1" => 1, "opf2" => 2), "graph" => Dict("graph1" => 1, "graph2" => 4)))
-    push_instance!(collection, "case118", Mongoc.BSON("OPF" => Dict("opf1" => 1, "opf2" => 2), "graph" => Dict("graph1" => 1, "graph2" => 4)))
-    push_instance!(collection, "case118mod", Mongoc.BSON("OPF" => Dict("opf1" => 1, "opf2" => 2), "graph" => Dict("graph1" => 1, "graph2" => 4)))
-    push_instance!(collection, "case14", Mongoc.BSON("OPF" => Dict("opf1" => 1, "opf2" => 2), "graph" => Dict("graph1" => 1, "graph2" => 4)))
-end
-
-"""DEBUG"""
-function construct_debug_decompositions(collection::Mongoc.Collection)
-    push_decomposition!(collection, "case1354", [[1,5], [6,7]], [[1,2,3], [4,5,6,7], [8,7]], [[1,2], [2,3]], Dict("clique" => Dict("clique1" => 1, "clique2" => 2), 
-                                                                                                                  "solve" => Dict("solve1" => 1, "solve2" => 2),
-                                                                                                                  "options_src" => Dict("options_src1" => 1, "options_src2" => 2),
-                                                                                                                  "options_dst" => Dict("options_dst1" => 1, "options_dst2" => 2)
-                                                                                                                 ))
-    push_decomposition!(collection, "case1354", [[6,7]], [[1,2,3], [4,5,6,7], [8,7]], [[1,2], [2,3]], Dict("clique" => Dict("clique1" => 1, "clique2" => 2), 
-                                                                                                                  "solve" => Dict("solve1" => 1, "solve2" => 2),
-                                                                                                                  "options_src" => Dict("options_src1" => 1, "options_src2" => 2),
-                                                                                                                  "options_dst" => Dict("options_dst1" => 1, "options_dst2" => 2)
-                                                                                                                 ))
-    push_decomposition!(collection, "case118", [[1,5], [6,7]], [[4,5,6,7], [8,7]], [[1,2], [2,3]], Dict("clique" => Dict("clique1" => 1, "clique2" => 2), 
-                                                                                                        "solve" => Dict("solve1" => 1, "solve2" => 2),
-                                                                                                        "options_src" => Dict("options_src1" => 1, "options_src2" => 2),
-                                                                                                        "options_dst" => Dict("options_dst1" => 1, "options_dst2" => 2)
-                                                                                                       ))
-    push_decomposition!(collection, "case118mod", [[6,7]], [[1,2,3], [4,5,6,7], [8,7]], [[1,2], [2,3]], Dict("clique" => Dict("clique1" => 1, "clique2" => 2), 
-                                                                                                             "solve" => Dict("solve1" => 1, "solve2" => 2),
-                                                                                                             "options_src" => Dict("options_src1" => 1, "options_src2" => 2),
-                                                                                                             "options_dst" => Dict("options_dst1" => 1, "options_dst2" => 2)
-                                                                                                            ))
-    push_decomposition!(collection, "case14", [[1,5]], [[1,2,3], [4,5,6,7], [8,7]], [[1,2], [2,3]], Dict("clique" => Dict("clique1" => 1, "clique2" => 2), 
-                                                                                                         "solve" => Dict("solve1" => 1, "solve2" => 2),
-                                                                                                         "options_src" => Dict("options_src1" => 1, "options_src2" => 2),
-                                                                                                         "options_dst" => Dict("options_dst1" => 1, "options_dst2" => 2)
-                                                                                                        ))
-end
 
 """
     get_collection(db_name, collection_name, client=Mongoc.Client())
