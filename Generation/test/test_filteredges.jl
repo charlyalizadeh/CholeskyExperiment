@@ -1,8 +1,8 @@
 using LightGraphs
 using Test
 
-include("../filteredges.jl")
-include("../utils.jl")
+include("../src/filteredges.jl")
+include("../src/utils.jl")
 
 @testset "filteredges" begin
     @testset "degree" begin
@@ -13,10 +13,10 @@ include("../utils.jl")
         add_edge!(graph, 5, 7)
         add_edge!(graph, 6, 9)
         v = vertices(graph)
-        @test filter_vertices_degree_max(v, graph, 3) == [1, 2, 10]
-        @test filter_vertices_degree_max(v, graph, 1) == []
-        @test filter_vertices_degree_min(v, graph, 2) == [3, 4, 5, 6, 7, 8, 9]
-        @test filter_vertices_degree_min(v, graph, 4) == []
+        @test filter_vertices_degree_max(v, graph, 2) == [1, 2, 10]
+        @test filter_vertices_degree_max(v, graph, 0) == []
+        @test filter_vertices_degree_min(v, graph, 3) == [3, 4, 5, 6, 7, 8, 9]
+        @test filter_vertices_degree_min(v, graph, 5) == []
         @test filter_vertices_degree(v, graph, 3) == [3, 5, 6, 7, 9]
         @test filter_vertices_degree(v, graph, [2, 3]) == [1, 2, 3, 5, 6, 7, 9]
         @test filter_vertices_degree(v, graph, [0, 3]) == [3, 5, 6, 7, 9]
@@ -34,12 +34,12 @@ include("../utils.jl")
         add_edge!(graph, 3, 7)
         v = vertices(graph)
         cliques = get_maximal_cliques(graph)
-        @test filter_vertices_size_biggest_clique_max(v, cliques, 4) == 1:11
-        @test filter_vertices_size_biggest_clique_max(v, cliques, 3) == [11]
-        @test filter_vertices_size_biggest_clique_max(v, cliques, 2) == []
-        @test filter_vertices_size_biggest_clique_min(v, cliques, 1) == 1:11
-        @test filter_vertices_size_biggest_clique_min(v, cliques, 2) == 1:10
-        @test filter_vertices_size_biggest_clique_min(v, cliques, 3) == []
+        @test filter_vertices_size_biggest_clique_max(v, cliques, 3) == 1:11
+        @test filter_vertices_size_biggest_clique_max(v, cliques, 2) == [11]
+        @test filter_vertices_size_biggest_clique_max(v, cliques, 1) == []
+        @test filter_vertices_size_biggest_clique_min(v, cliques, 2) == 1:11
+        @test filter_vertices_size_biggest_clique_min(v, cliques, 3) == 1:10
+        @test filter_vertices_size_biggest_clique_min(v, cliques, 4) == []
         @test filter_vertices_size_biggest_clique(v, cliques, 2) == [11]
         @test filter_vertices_size_biggest_clique(v, cliques, 3) == 1:10
         @test filter_vertices_size_biggest_clique(v, cliques, 4) == []
@@ -56,12 +56,12 @@ include("../utils.jl")
         add_edge!(graph, 3, 7)
         v = vertices(graph)
         cliques = get_maximal_cliques(graph)
-        @test filter_vertices_size_smallest_clique_max(v, cliques, 4) == 1:11
-        @test filter_vertices_size_smallest_clique_max(v, cliques, 3) == [10, 11]
-        @test filter_vertices_size_smallest_clique_max(v, cliques, 2) == []
-        @test filter_vertices_size_smallest_clique_min(v, cliques, 1) == 1:11
-        @test filter_vertices_size_smallest_clique_min(v, cliques, 2) == 1:9
-        @test filter_vertices_size_smallest_clique_min(v, cliques, 3) == []
+        @test filter_vertices_size_smallest_clique_max(v, cliques, 3) == 1:11
+        @test filter_vertices_size_smallest_clique_max(v, cliques, 2) == [10, 11]
+        @test filter_vertices_size_smallest_clique_max(v, cliques, 1) == []
+        @test filter_vertices_size_smallest_clique_min(v, cliques, 2) == 1:11
+        @test filter_vertices_size_smallest_clique_min(v, cliques, 3) == 1:9
+        @test filter_vertices_size_smallest_clique_min(v, cliques, 4) == []
         @test filter_vertices_size_smallest_clique(v, cliques, 2) == [10, 11]
         @test filter_vertices_size_smallest_clique(v, cliques, 3) == 1:9
         @test filter_vertices_size_smallest_clique(v, cliques, 4) == []
@@ -74,12 +74,12 @@ include("../utils.jl")
         add_edge!(graph, 5, 7)
         add_edge!(graph, 6, 9)
         v = vertices(graph)
-        @test filter_vertices_distance_max(v, 1, graph, 5) == 1:10
-        @test filter_vertices_distance_max(v, 1, graph, 2) == [1, 2, 4]
-        @test filter_vertices_distance_max(v, 1, graph, 0) == []
-        @test filter_vertices_distance_min(v, 1, graph, 0) == 2:10
-        @test filter_vertices_distance_min(v, 1, graph, 2) == [6, 7, 9, 10]
-        @test filter_vertices_distance_min(v, 1, graph, 5) == []
+        @test filter_vertices_distance_max(v, 1, graph, 4) == 1:10
+        @test filter_vertices_distance_max(v, 1, graph, 1) == [1, 2, 4]
+        @test filter_vertices_distance_max(v, 1, graph, -1) == []
+        @test filter_vertices_distance_min(v, 1, graph, 1) == 2:10
+        @test filter_vertices_distance_min(v, 1, graph, 3) == [6, 7, 9, 10]
+        @test filter_vertices_distance_min(v, 1, graph, 6) == []
         @test filter_vertices_distance(v, 1, graph, 3) == [6, 7, 9]
         @test filter_vertices_distance(v, 1, graph, 4) == [10]
         @test filter_vertices_distance(v, 1, graph, 5) == []
@@ -109,9 +109,9 @@ include("../utils.jl")
         add_edge!(graph, 5, 7)
         add_edge!(graph, 6, 9)
         v = vertices(graph)
-        @test filter_no_edge(v, 1, graph) == [1, 3, 5, 6, 7, 8, 9, 10, 11]
-        @test filter_no_edge(v, 11, graph) == 1:11
-        @test filter_has_edge(v, 1, graph) == [2, 4]
-        @test filter_has_edge(v, 11, graph) == []
+        @test filter_vertices_no_edge(v, 1, graph) == [1, 3, 5, 6, 7, 8, 9, 10, 11]
+        @test filter_vertices_no_edge(v, 11, graph) == 1:11
+        @test filter_vertices_has_edge(v, 1, graph) == [2, 4]
+        @test filter_vertices_has_edge(v, 11, graph) == []
     end
 end

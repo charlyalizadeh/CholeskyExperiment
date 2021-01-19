@@ -38,7 +38,7 @@ function filter_vertices_size_biggest_clique_max(vertices, cliques, size)
     valid_vertices = []
     for vertex in vertices
         filter_cliques = filter(clique -> vertex in clique, cliques)
-        if getmaxsize(filter_cliques) < size
+        if getmaxsize(filter_cliques) <= size
             push!(valid_vertices, vertex)
         end
     end
@@ -54,7 +54,7 @@ function filter_vertices_size_biggest_clique_min(vertices, cliques, size)
     valid_vertices = []
     for vertex in vertices
         filter_cliques = filter(clique -> vertex in clique, cliques)
-        if getmaxsize(filter_cliques) > size
+        if getmaxsize(filter_cliques) >= size
             push!(valid_vertices, vertex)
         end
     end
@@ -87,7 +87,7 @@ function filter_vertices_size_smallest_clique_max(vertices, cliques, size)
     valid_vertices = []
     for vertex in vertices
         filter_cliques = filter(clique -> vertex in clique, cliques)
-        if getminsize(filter_cliques) < size
+        if getminsize(filter_cliques) <= size
             push!(valid_vertices, vertex)
         end
     end
@@ -103,7 +103,7 @@ function filter_vertices_size_smallest_clique_min(vertices, cliques, size)
     valid_vertices = []
     for vertex in vertices
         filter_cliques = filter(clique -> vertex in clique, cliques)
-        if getminsize(filter_cliques) > size
+        if getminsize(filter_cliques) >= size
             push!(valid_vertices, vertex)
         end
     end
@@ -133,7 +133,7 @@ Return the vertices in `vertices` whose distance to `src` is lesser than `dist`.
 """
 function filter_vertices_distance_max(vertices, src, graph, dist)
     distances = dijkstra_shortest_paths(graph, src).dists
-    return filter(vertex -> distances[vertex] < dist, vertices)
+    return filter(vertex -> distances[vertex] <= dist, vertices)
 end
 
 """
@@ -143,7 +143,7 @@ Return the vertices in `vertices` whose distance to `src` is greater than `dist`
 """
 function filter_vertices_distance_min(vertices, src, graph, dist)
     distances = dijkstra_shortest_paths(graph, src).dists
-    return filter(vertex -> distances[vertex] > dist, vertices)
+    return filter(vertex -> distances[vertex] >= dist, vertices)
 end
 
 """
@@ -167,19 +167,29 @@ end
 
 
 """
-    filter_no_edge(vertices, src, graph)
+    filter_vertices_no_same_clique(vertices, src, cliques)
+
+Return the vertices in `vertices` that don't share a similar clique to `src`.
+"""
+function filter_vertices_no_same_clique(vertices, src, cliques)
+    return filter(vertex -> isempty(getsubset(cliques, [src, vertex])), vertices)
+end
+
+
+"""
+    filter_vertices_no_edge(vertices, src, graph)
 
 Return the vertices in `vertices` that don't share an edge with `src`.
 """
-function filter_no_edge(vertices, src, graph)
+function filter_vertices_no_edge(vertices, src, graph)
     return filter(vertex -> !has_edge(graph, src, vertex), vertices)
 end
 
 """
-    filter_has_edge(vertices, src, graph)
+    filter_vertices_has_edge(vertices, src, graph)
 
 Return the vertices in `vertices` that share an edge with `src`.
 """
-function filter_has_edge(vertices, src, graph)
+function filter_vertices_has_edge(vertices, src, graph)
     return filter(vertex -> has_edge(graph, src, vertex), vertices)
 end

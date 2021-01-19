@@ -3,19 +3,19 @@ using LightGraphs
 """
     degreeisgreater(graph::AbstractGraph, vertex, deg)
 
-Check if the degree of `vertex` is strictly greater than `deg`.
+Check if the degree of `vertex` is greater than `deg`.
 """
 function degreeisgreater(graph::AbstractGraph, vertex, deg)
-    return degree(graph)[vertex] > deg
+    return degree(graph)[vertex] >= deg
 end
 
 """
     degreeislesser(graph::AbstractGraph, vertex, deg)
 
-Check if the degree of `vertex` is strictly lesser than `deg`.
+Check if the degree of `vertex` is lesser than `deg`.
 """
 function degreeislesser(graph::AbstractGraph, vertex, deg)
-    return degree(graph)[vertex] < deg
+    return degree(graph)[vertex] <= deg
 end
 
 """
