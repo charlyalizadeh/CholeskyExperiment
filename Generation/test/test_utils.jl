@@ -1,7 +1,8 @@
 using LightGraphs
 using Test
 
-include("../src/utils.jl")
+include("../src/utils/filters.jl")
+include("../src/utils/maximalcliques.jl")
 
 @testset "utils" begin
     @testset "graph degree" begin

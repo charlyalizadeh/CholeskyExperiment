@@ -2,7 +2,6 @@ using LightGraphs
 using Test
 
 include("../src/filteredges.jl")
-include("../src/utils.jl")
 
 @testset "filteredges" begin
     @testset "degree" begin
