@@ -3,7 +3,6 @@ using Random
 
 include("./filteredges.jl")
 
-
 const src_options = Dict(
     :degree_max => filter_vertices_degree_max,
     :degree_min => filter_vertices_degree_min,
@@ -83,7 +82,8 @@ function get_valid_dsts(graph, options, src, v=setdiff(vertices(graph), src))
     end
 end
 
-function add_edge_by!(graph::AbstractGraph, options_src::Dict=nothing, options_dst::Dict=nothing)
+function add_edge_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dict, seed=nothing)
+    seed == nothing || Random.seed!(seed)
     src = nothing
     dst = nothing
     srcs = get_valid_vertices(graph, options_src)
@@ -100,7 +100,32 @@ function add_edge_by!(graph::AbstractGraph, options_src::Dict=nothing, options_d
         end
     end
     if dst == nothing
-        return False
+        return nothing
     end
+    add_edge!(graph, src, dst)
     return src, dst
+end
+
+function add_edges_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing)
+    seed == nothing || Random.seed!(seed)
+    added_edges = []
+    for i in 1:nb_edges
+        edge = add_edge_by!(graph, options_src, options_dst)
+        if  edge == nothing
+            warn("Could not add $(nb_edges) with the given options, added $(i) instead")
+            break
+        elseif
+            push!(added_edges, edge)
+        end
+    end
+    return added_edges
+end
+
+function add_edges_by!(graphs::Array{AbstractGraph}, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing)
+    seed == nothing || Random.seed!(seed)
+    added_edges = []
+    for graph in graphs
+        push!(added_edges, add_edges_by!(graph, options_src, options_dst, nb_edges))
+    end
+    return added_edges
 end

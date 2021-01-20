@@ -1,6 +1,7 @@
 using LightGraphs
 
-include("utils.jl")
+include("utils/filters.jl")
+include("utils/maximalcliques.jl")
 
 """
     filter_vertices_degree_max(vertices, graph, degree)
