@@ -114,7 +114,7 @@ function add_edges_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dic
         if  edge == nothing
             warn("Could not add $(nb_edges) with the given options, added $(i) instead")
             break
-        elseif
+        else
             push!(added_edges, edge)
         end
     end
