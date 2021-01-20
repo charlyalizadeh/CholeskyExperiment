@@ -23,50 +23,52 @@ function instance_in_db(collection::Mongoc.Collection, instance_name::String)
 end
 
 """
-    decomposition_in_db(collection::Mongoc.Collection, instance_name::String, added_edge)
+    decomposition_in_db(collection::Mongoc.Collection, instance_name::String, added_edges)
 
-Check if a decomposition with "_id" = {"instance_name" : `instance_name`, "added_edge" : `added_edge`} exists in `collection`.
+Check if a decomposition with "_id" = {"instance_name" : `instance_name`, "added_edges" : `added_edges`} exists in `collection`.
 See also [`get_decomposition`].
 """
-function decomposition_in_db(collection::Mongoc.Collection, instance_name::String, added_edge)
-    document = Mongoc.BSON("_id" => Dict("instance_name" => instance_name, "added_edge" => added_edge))
+function decomposition_in_db(collection::Mongoc.Collection, instance_name::String, added_edges)
+    document = Mongoc.BSON("_id" => Mongoc.BSON("instance_name" => instance_name, "added_edges" => added_edges))
     return Mongoc.count_documents(collection, document) >= 1
 end
 
 """
-    push_instance!(collection::Mongoc.Collection, instance_name::String, features=Dict())
+    push_instance!(collection::Mongoc.Collection, instance_name::String, paths=Mongoc.BSON(), features=Mongoc.BSON())
 
 Insert an instance in `collection`.
 """
-function push_instance!(collection::Mongoc.Collection, instance_name::String, features=Dict())
+function push_instance!(collection::Mongoc.Collection, instance_name::String, paths=Mongoc.BSON(), features=Mongoc.BSON())
     if !instance_in_db(collection, instance_name)
-        document = Mongoc.BSON("_id" => instance_name, "features" => features)
+        document = Mongoc.BSON("_id" => instance_name, "paths" => paths, "features" => features)
         push!(collection, document)
     end
 end
 
 """
-    push_decomposition!(collection::Mongoc.Collection, instance_name::String, added_edge, blocks, cliquetree, features=Dict())
+    push_decomposition!(collection::Mongoc.Collection, instance_name::String, added_edges, cliques, cliquetree, path_MOSEK=nothing, features=Mongoc.BSON())
 
 Insert a decomposition in `collection`.
 """
-function push_decomposition!(collection::Mongoc.Collection, instance_name::String, added_edge, blocks, cliquetree, features=Dict())
-    if !decomposition_in_db(collection, instance_name, added_edge)
-        document = Mongoc.BSON("_id" => Dict("instance_name" => instance_name, "added_edge" => added_edge), "features" => features)
+function push_decomposition!(collection::Mongoc.Collection, instance_name::String, 
+                             added_edges, cliques, cliquetree, path_MOSEK=nothing, features=Mongoc.BSON())
+    if !decomposition_in_db(collection, instance_name, added_edges)
+        document = Mongoc.BSON("_id" => Mongoc.BSON("instance_name" => instance_name, "added_edges" => added_edges),
+                               "path_MOSEK_log" => path_MOSEK,
+                               "cliques" => cliques,
+                               "cliquetree" => cliquetree,
+                               "features" => features)
         push!(collection, document)
     end
 end
 
 """
-    set_features!(collection::Mongoc.Collection, selector, features, replace::Bool=false)
+    set_features!(collection::Mongoc.Collection, selector, features)
 
-Add/Update/Replace the field "features" in the document corresponding to `selector` in the collection `collection`.
+Add/Update the field "features" in the document corresponding to `selector` in the collection `collection`.
 """
-function set_features!(collection::Mongoc.Collection, selector, features, replace::Bool=false)
-    formated_dict_features = features
-    if !replace
-        formated_dict_features = Dict("features.$(first(item))" => last(item) for item in features)
-    end
+function set_features!(collection::Mongoc.Collection, selector, features)
+    formated_dict_features = Dict("features.$(first(item))" => last(item) for item in features)
     update = Mongoc.BSON("\$set" => formated_dict_features)
     Mongoc.update_one(collection, selector, update)
 end
@@ -76,19 +78,19 @@ end
 
 Add/Update/Replace the field "features" in the document corresponding to "_id" == `instance_name`.
 """
-function set_instance_features!(collection::Mongoc.Collection, instance_name::String, features, replace::Bool=false)
+function set_instance_features!(collection::Mongoc.Collection, instance_name::String, features)
     selector = Mongoc.BSON("_id" => instance_name)
-    set_features!(collection, selector, features, replace)
+    set_features!(collection, selector, features)
 end
 
 """
-    set_decomposition_features!(collection::Mongoc.Collection, instance_name::String, added_edge, features, replace::Bool=false)
+    set_decomposition_features!(collection::Mongoc.Collection, instance_name::String, added_edges, features, replace::Bool=false)
 
-Add/Update/Replace the field "features" in the document corresponding to "_id" == {"instance_name" : `instance_name`, "added_edge" : `added_edge`}.
+Add/Update/Replace the field "features" in the document corresponding to "_id" == {"instance_name" : `instance_name`, "added_edges" : `added_edges`}.
 """
-function set_decomposition_features!(collection::Mongoc.Collection, instance_name::String, added_edge, features, replace::Bool=false)
-    selector = Mongoc.BSON("_id" => Dict("instance_name" => instance_name, "added_edge" => added_edge))
-    set_features!(collection, selector, features, replace)
+function set_decomposition_features!(collection::Mongoc.Collection, instance_name::String, added_edges, features)
+    selector = Mongoc.BSON("_id" => Mongoc.BSON("instance_name" => instance_name, "added_edges" => added_edges))
+    set_features!(collection, selector, features)
 end
 
 """
@@ -102,12 +104,12 @@ function get_instance(collection::Mongoc.Collection, instance_name::String)
 end
 
 """
-    get_decomposition(collection::Mongoc.Collection, instance_name::String, added_edge)
+    get_decomposition(collection::Mongoc.Collection, instance_name::String, added_edges)
 
-Return a `Mongoc.BSON` correspong to the document in `collection` width "_id" == { "instance_name" : `instance_name`, "added_edge" : `added_edge`}. Return `nothing` if document does not exist.
+Return a `Mongoc.BSON` correspong to the document in `collection` width "_id" == { "instance_name" : `instance_name`, "added_edges" : `added_edges`}. Return `nothing` if document does not exist.
 """
-function get_decomposition(collection::Mongoc.Collection, instance_name::String, added_edge)
-    selector = Mongoc.BSON("_id" => Dict("instance_name" => instance_name, "added_edge" => added_edge))
+function get_decomposition(collection::Mongoc.Collection, instance_name::String, added_edges)
+    selector = Mongoc.BSON("_id" => Mongoc.BSON("instance_name" => instance_name, "added_edges" => added_edges))
     return Mongoc.find_one(collection, selector)
 end
 
