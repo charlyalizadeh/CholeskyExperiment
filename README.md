@@ -80,8 +80,10 @@ The `DecompositionDB` module is intended to be used with two [MongoDB collection
 
 ```BSON
 {
-    "_id": { "instance_name": "caseExample", added_edge: [[], []], ...] },
+    "_id": { "instance_name": "caseExample", "added_edge": [[], []...], ...] },
     "path_MOSEK_log": "path/to/Moseklog",
+    "cliques": [[], []],
+    "cliquetree": [[], []],
     "features": {
         "clique": { "clique_features1": 1, "clique_features2": 2, ... },
         "solve": { "solve_features1": 1, "solve_features2": 2, ... },
@@ -105,6 +107,8 @@ decomposition_collection = get_collection("cholesky", "decomposition")
 # Instance insertion
 push_instance!(instance_collection,
               "case1354", # Instance name
+              [Dict("path_name" => "OPF", "path" => "path/to/OPF"),
+               Dict("path_name" => "Matpower", "path" => "path/to/Matpower")] # Paths
               Mongoc.BSON("OPF" => Dict("opf1" => 1, "opf2" => 2),
                           "graph" => Dict("graph1" => 1, "graph2" => 2)
                         ) # Instance features
@@ -113,8 +117,9 @@ push_instance!(instance_collection,
 # Decomposition insertion
 push_decomposition!(decomposition_collection,
                     "case1354", # Instance name
-                    [[1,5], [6,7]], # Added edges
-                    [[1,2,3], [4,5,6,7]], # Cliques
+                    [[1, 5], [6, 7]], # Added edges
+                    [[1, 2, 3], [4, 5, 6, 7]], # Cliques
+                    [[1, 2]], # Clique Tree
                     Dict("clique" => Dict("clique1" => 1, "clique2" => 2),
                          "solve" => Dict("solve1" => 1, "solve2" => 2),
                          "options_src" => Dict("options_src1" => Dict(), "options_src2" => Dict())
