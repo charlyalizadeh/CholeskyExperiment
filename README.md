@@ -68,8 +68,9 @@ The `DecompositionDB` module is intended to be used with two [MongoDB collection
 {
     "_id": "caseExample",
     "paths": [
-        { "path_name": "OPF", "path": "path/to/OPF" },
-        { "path_name": "Matpower", "path": "path/to/Matpower" }
+        { "OPF_mat": "path/to/OPF_mat" },
+        { "OPF_ctr": "path/to/OPF_mat" },
+        { "matpower": "path/to/matpower" },
     ],
     "features": {
         "OPF": { "opf_features": 1, "opf_features2": 2, ... },
@@ -93,8 +94,6 @@ The `DecompositionDB` module is intended to be used with two [MongoDB collection
 }
 ```
 
->> Note that none of those two schemas are forced, they are only how **we** use it. You could use it in another way but it may not make a lot of sense.
-
 We use it this way:
 
 ```julia
@@ -107,8 +106,9 @@ decomposition_collection = get_collection("cholesky", "decomposition")
 # Instance insertion
 push_instance!(instance_collection,
               "case1354", # Instance name
-              [Dict("path_name" => "OPF", "path" => "path/to/OPF"),
-               Dict("path_name" => "Matpower", "path" => "path/to/Matpower")] # Paths
+              [Mongoc.BSON("OPF_mat" => "path/to/OPF_mat"),
+               Mongoc.BSON("OPF_ctr" => "path/to/OPF_ctr"),
+               Mongoc.BSON("matpower" => "path/to/matpower")] # Paths
               Mongoc.BSON("OPF" => Dict("opf1" => 1, "opf2" => 2),
                           "graph" => Dict("graph1" => 1, "graph2" => 2)
                         ) # Instance features
