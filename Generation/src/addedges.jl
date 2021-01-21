@@ -1,7 +1,9 @@
 using LightGraphs
 using Random
+import Base:occursin
 
 include("./filteredges.jl")
+include("./utils/misc.jl")
 
 const src_options = Dict(
     :degree_max => filter_vertices_degree_max,
@@ -34,6 +36,7 @@ const dst_options = Dict(
     :has_edge => filter_vertices_has_edge 
 )
 
+
 function check_options_src(options_src)
     options_names = keys(options_src)
     if issubset((:degree_max, :degree_min), options_names) && options_src[:degree_max]["degree"] < options_src[:degree_min]["degree"]
@@ -63,35 +66,44 @@ function check_options_dst(options_dst)
     end
 end
 
-function get_valid_srcs(graph, options, v=vertices(graph))
+function get_valid_srcs(vertices, options)
     for (option, args) in options
-        v = dst_options[option](args...)
-        if isempty(v)
-            return v
+        args[:vertices] = vertices
+        @debug "BEFORE SRC: " vertices
+        vertices = src_options[option](;args...)
+        @debug "AFTER SRC: " vertices
+        if isempty(vertices)
+            return vertices
         end
     end
+    return vertices
 end
 
-function get_valid_dsts(graph, options, src, v=setdiff(vertices(graph), src))
+function get_valid_dsts(vertices, options, src)
     for (option, args) in options
-        insert!(args, src, 2)
-        v = dst_options[option](args...)
-        if isempty(v)
-            return v
+        args[:vertices] = vertices
+        ms = collect(methods(dst_options[option]))
+        if :src in method_argnames(last(ms))
+            args[:src] = src
+        end
+        vertices = dst_options[option](;args...)
+        if !isempty(vertices)
+            return vertices
         end
     end
+    return vertices
 end
 
 function add_edge_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dict, seed=nothing)
     seed == nothing || Random.seed!(seed)
     src = nothing
     dst = nothing
-    srcs = get_valid_vertices(graph, options_src)
+    srcs = get_valid_srcs(vertices(graph), options_src)
     isempty(srcs) && return nothing
     while !isempty(srcs)
         src = srcs[rand(1:end)]
-        dsts = get_valid_vertices(graph, options_dst, true, setdiff(vertices(graph), src))
-        if isempty(srcs)
+        dsts = get_valid_dsts(setdiff(vertices(graph), src), options_dst, src)
+        if isempty(dsts)
             srcs = setdiff(srcs, src)
             continue
         else
@@ -112,7 +124,7 @@ function add_edges_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dic
     for i in 1:nb_edges
         edge = add_edge_by!(graph, options_src, options_dst)
         if  edge == nothing
-            warn("Could not add $(nb_edges) with the given options, added $(i) instead")
+            @warn "Could not add $(nb_edges) with the given options, added $(length(added_edges)) instead"
             break
         else
             push!(added_edges, edge)

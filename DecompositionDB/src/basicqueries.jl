@@ -42,6 +42,9 @@ function push_instance!(collection::Mongoc.Collection, instance_name::String, pa
     if !instance_in_db(collection, instance_name)
         document = Mongoc.BSON("_id" => instance_name, "paths" => paths, "features" => features)
         push!(collection, document)
+        return true
+    else
+        return false
     end
 end
 
@@ -59,6 +62,9 @@ function push_decomposition!(collection::Mongoc.Collection, instance_name::Strin
                                "cliquetree" => cliquetree,
                                "features" => features)
         push!(collection, document)
+        return true
+    else
+        return false
     end
 end
 
@@ -120,4 +126,13 @@ Get all the documents in `collection` in the form of an array of `Mongoc.BSON` o
 """
 function get_all_document(collection::Mongoc.Collection)
     return collect(collection)
+end
+
+"""
+    get_all_matpower_path(collection::Mongoc.Collection)
+
+Get all the matpower path field in `collection` in the form of an array of `Mongoc.BSON` object.
+"""
+function get_all_matpower_path(collection::Mongoc.Collection)
+    return Mongoc.find(collection, Mongoc.BSON(); options=Mongoc.BSON("projection" => Mongoc.BSON("paths.matpower" => true)))
 end
