@@ -49,17 +49,34 @@ function push_instance!(collection::Mongoc.Collection, instance_name::String, pa
 end
 
 """
-    push_decomposition!(collection::Mongoc.Collection, instance_name::String, added_edges, cliques, cliquetree, path_MOSEK=nothing, features=Mongoc.BSON())
+    push_decomposition!(collection::Mongoc.Collection,
+                        instance_name::String, 
+                        added_edges,
+                        cliques,
+                        cliquetree,
+                        options_src,
+                        options_dst,
+                        path_MOSEK=nothing,
+                        features=Mongoc.BSON())
 
 Insert a decomposition in `collection`.
 """
-function push_decomposition!(collection::Mongoc.Collection, instance_name::String, 
-                             added_edges, cliques, cliquetree, path_MOSEK=nothing, features=Mongoc.BSON())
+function push_decomposition!(collection::Mongoc.Collection,
+                             instance_name::String, 
+                             added_edges::Array,
+                             cliques::Array,
+                             cliquetree::Array,
+                             options_src::Dict,
+                             options_dst::Dict,
+                             path_MOSEK=nothing,
+                             features=Mongoc.BSON())
     if !decomposition_in_db(collection, instance_name, added_edges)
         document = Mongoc.BSON("_id" => Mongoc.BSON("instance_name" => instance_name, "added_edges" => added_edges),
                                "path_MOSEK_log" => path_MOSEK,
                                "cliques" => cliques,
                                "cliquetree" => cliquetree,
+                               "options_src" => options_src,
+                               "options_dst" => options_dst,
                                "features" => features)
         push!(collection, document)
         return true
