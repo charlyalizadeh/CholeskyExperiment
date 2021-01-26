@@ -3,11 +3,13 @@ using Mongoc
 
 include("../src/basicqueries.jl")
 
+# TODO: Update the test
 function construct_test_instances(collection::Mongoc.Collection)
     push_instance!(collection,
                    "case1354",
                    [Mongoc.BSON("path_name" => "OPF", "path" => "path/to/OPF"),
                     Mongoc.BSON("path_name" => "Matpower", "path" => "path/to/Matpower")],
+
                    Mongoc.BSON("OPF" => Mongoc.BSON("opf1" => 1, "opf2" => 2),
                                "graph" => Mongoc.BSON("graph1" => 1, "graph2" => 4)))
     push_instance!(collection,
