@@ -178,19 +178,19 @@ end
 
 
 """
-    filter_vertices_no_edge(vertices, src::T, graph::G) where {T<:Int, G<:AbstractGraph}
+    filter_vertices_no_edge(vertices, src::T, choleskygraph::G) where {T<:Int, G<:AbstractGraph}
 
 Return the vertices in `vertices` that don't share an edge with `src`.
 """
-function filter_vertices_no_edge(;vertices, src::T, graph::G) where {T<:Int, G<:AbstractGraph}
-    return filter(vertex -> !has_edge(graph, src, vertex), vertices)
+function filter_vertices_no_edge(;vertices, src::T, choleskygraph::G) where {T<:Int, G<:AbstractGraph}
+    return filter(vertex -> !has_edge(choleskygraph, src, vertex), vertices)
 end
 
 """
-    filter_vertices_has_edge(vertices, src::T, graph::G) where {T<:Int, G<:AbstractGraph}
+    filter_vertices_has_edge(vertices, src::T, choleskygraph::G) where {T<:Int, G<:AbstractGraph}
 
 Return the vertices in `vertices` that share an edge with `src`.
 """
-function filter_vertices_has_edge(;vertices, src::T, graph::G) where {T<:Int64, G<:AbstractGraph}
-    return filter(vertex -> has_edge(graph, src, vertex), vertices)
+function filter_vertices_has_edge(;vertices, src::T, choleskygraph::G) where {T<:Int64, G<:AbstractGraph}
+    return filter(vertex -> has_edge(choleskygraph, src, vertex), vertices)
 end

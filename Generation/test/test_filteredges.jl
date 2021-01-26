@@ -108,9 +108,9 @@ include("../src/filteredges.jl")
         add_edge!(graph, 5, 7)
         add_edge!(graph, 6, 9)
         v = vertices(graph)
-        @test filter_vertices_no_edge(vertices=v, src=1, graph=graph) == [1, 3, 5, 6, 7, 8, 9, 10, 11]
-        @test filter_vertices_no_edge(vertices=v, src=11, graph=graph) == 1:11
-        @test filter_vertices_has_edge(vertices=v, src=1, graph=graph) == [2, 4]
-        @test filter_vertices_has_edge(vertices=v, src=11, graph=graph) == []
+        @test filter_vertices_no_edge(vertices=v, src=1, choleskygraph=graph) == [1, 3, 5, 6, 7, 8, 9, 10, 11]
+        @test filter_vertices_no_edge(vertices=v, src=11, choleskygraph=graph) == 1:11
+        @test filter_vertices_has_edge(vertices=v, src=1, choleskygraph=graph) == [2, 4]
+        @test filter_vertices_has_edge(vertices=v, src=11, choleskygraph=graph) == []
     end
 end
