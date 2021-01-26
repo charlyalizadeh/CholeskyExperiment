@@ -183,7 +183,9 @@ function get_cliquetree(cliques)
             end
         end
     end
-    return kruskal_mst(graph, dstmx; minimize = false)
+    cliquetree = kruskal_mst(graph, dstmx; minimize = false)
+    cliquetree = [[edge.src, edge.dst] for edge in cliquetree]
+    return cliquetree
 end
 
 """

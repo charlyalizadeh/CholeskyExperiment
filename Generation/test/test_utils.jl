@@ -113,8 +113,7 @@ include("../src/utils/maximalcliques.jl")
         add_edge!(graph, 1, 3)
         cliques = get_maximal_cliques(graph)
         cliquetree = get_cliquetree(cliques)
-        @test cliquetree[1].src == 1
-        @test cliquetree[1].dst == 2
+        @test cliquetree[1] == [1, 2]
     end
     @testset "is_chordal" begin
         graph = path_graph(4)

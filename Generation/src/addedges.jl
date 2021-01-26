@@ -69,9 +69,7 @@ end
 function get_valid_srcs(vertices, options)
     for (option, args) in options
         args[:vertices] = vertices
-        @debug "BEFORE SRC: " vertices
         vertices = src_options[option](;args...)
-        @debug "AFTER SRC: " vertices
         if isempty(vertices)
             return vertices
         end
@@ -94,7 +92,7 @@ function get_valid_dsts(vertices, options, src)
     return vertices
 end
 
-function add_edge_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dict, seed=nothing)
+function add_edge_by!(graph::T, options_src::Dict, options_dst::Dict, seed=nothing) where T<:AbstractGraph
     seed == nothing || Random.seed!(seed)
     src = nothing
     dst = nothing
@@ -115,10 +113,10 @@ function add_edge_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dict
         return nothing
     end
     add_edge!(graph, src, dst)
-    return src, dst
+    return [src, dst]
 end
 
-function add_edges_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing)
+function add_edges_by!(graph::T, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing) where T<:AbstractGraph
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for i in 1:nb_edges
@@ -133,7 +131,7 @@ function add_edges_by!(graph::AbstractGraph, options_src::Dict, options_dst::Dic
     return added_edges
 end
 
-function add_edges_by!(graphs::Array{AbstractGraph}, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing)
+function add_edges_by!(graphs::Array{T}, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing) where T<:AbstractGraph
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for graph in graphs
