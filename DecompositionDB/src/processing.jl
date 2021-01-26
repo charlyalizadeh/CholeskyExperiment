@@ -1,104 +1,110 @@
 using Mongoc
 using DataFrames
 
-"""
-    get_subsubdocuments_keys(documents, name_doc1, name_doc2, assymbols=false)
 
-Get all the keys of the documents corresponding to `documents[name_doc1][name_doc2]`.
-"""
-function get_subsubdocuments_keys(documents, name_doc1, name_doc2; assymbols=false)
-    field_name = []
+
+## Source: https://stackoverflow.com/questions/2997004/using-map-reduce-for-mapping-the-properties-in-a-collection
+## ## It's a little mess.
+## ## This way of finding the key names is not nice but it works.
+## ## TODO: Find a better way to do this
+function compute_features_keys(collection::Mongoc.Collection)
+        mapper = Mongoc.BSONCode(""" 
+            function(){
+              for(var key in this["features"]) {
+                if(typeof this["features"][key] == 'object'){
+                    for(var subkey in this["features"][key]) {
+                        emit(key + "." + subkey, null);
+                    }
+                }
+                else {
+                    emit(key, null);
+                }
+              }
+            }
+        """)
+    reducer = Mongoc.BSONCode("""function(key, stuff) { return null; }""")
+    map_reduce_command = Mongoc.BSON()
+    map_reduce_command["mapReduce"] = collection.name
+    map_reduce_command["map"] = mapper
+    map_reduce_command["reduce"] = reducer
+    map_reduce_command["out"] = "$(collection.name)_keys"
+    result = Mongoc.read_command(collection.database, map_reduce_command)
+    return result
+end
+
+
+function get_feature(document, feature_name::String)
+    feature_name_split = split(feature_name, ".")
+    features = document["features"]
+    for feature_name_level in feature_name_split
+        if !haskey(features, feature_name_level)
+            return missing
+        elseif typeof(features[feature_name_level]) <: Dict
+            features = features[feature_name_level]
+        else
+            return features[feature_name_level]
+        end
+    end
+end
+
+function get_features_df_decompositions(collection::Mongoc.Collection, collection_keys::Mongoc.Collection)
+    features_name = [feature["_id"] for feature in collection_keys]
+    documents = collect(collection)
+    colnames = Dict(val => String[] for val in features_name)
+    colnames["instance_name"] = String[]
+    colnames = convert(Dict{String, Union{Array{String}, Array{Int}}}, colnames) # TODO: find another way to do this
+    colnames["nb_added_edges"] = Int[]
+    df = DataFrame(colnames)
+    allowmissing!(df)
+    fill_features_df_decompositions!(df, documents, features_name)
+    return df
+end
+
+function fill_features_df_decompositions!(df::DataFrame, documents, features_name)
     for document in documents
-        append!(field_name, keys(document[name_doc1][name_doc2]))
+        features = Dict("instance_name" => document["_id"]["instance_name"],
+                        "nb_added_edges" => length(document["_id"]["added_edges"]))
+        for feature_name in features_name
+            feature = get_feature(document, feature_name)
+            features[feature_name] = ismissing(feature) ? feature : string(feature)
+        end
+        push!(df, features)
     end
-    unique_keys = unique(field_name)
-    if assymbols
-        return [Symbol(key) for key in unique_keys]
-    end
-    return unique_keys
 end
 
-"""
-    get_id_names(document)
-
-Return the field names of the `_id` field in a document.
-"""
-function get_id_names(document; assymbols=false)
-    id_names = typeof(document["_id"]) <: Dict ? collect(keys(document["_id"])) : ["instance_name"]
-    if assymbols
-        return [Symbol(id_name) for id_name in id_names]
-    end
-    return id_names
-end
-
-"""
-    get_features_df(collection::AbstractArray, feature::String)
-
-Return a DataFrame containing the list of document with the specified feature.
-"""
-function get_features_df(documents::AbstractArray, feature::String)
-    columns = get_subsubdocuments_keys(documents, "features", feature)
-    dict_features = Dict(key => [] for key in columns)
-    id_names = get_id_names(documents[1])
-    for id_name in id_names
-        dict_features[id_name] = []
-    end
-    for instance in documents
-        for id_name in id_names
-            element = length(id_names) > 1 ?  instance["_id"][id_name] : instance["_id"]
-            push!(dict_features[id_name], element)
-        end
-        for key in columns
-            if haskey(instance["features"][feature], key)
-                push!(dict_features[key], instance["features"][feature][key])
-            else
-                push!(dict_features[key], missing)
-            end
-        end
-    end
-    dict_features = Dict(Symbol(key) => dict_features[key] for key in keys(dict_features))
-    df = DataFrame(; dict_features...)
+function get_features_df_instances(collection::Mongoc.Collection, collection_keys::Mongoc.Collection)
+    features_name = [feature["_id"] for feature in collection_keys]
+    documents = collect(collection)
+    colnames = Dict(val => String[] for val in features_name)
+    colnames["instance_name"] = String[]
+    df = DataFrame(colnames)
+    allowmissing!(df)
+    fill_features_df_instances!(df, documents, features_name)
     return df
 end
 
-"""
-    get_features_df(documents::AbstractArray, feature::AbstractArray)
-
-Return a DataFrame containing the list of document with the specified features.
-"""
-function get_features_df(documents::AbstractArray, feature::AbstractArray)
-    id_names = get_id_names(documents[1]; assymbols=true)
-    df = get_features_df(documents, feature[1])
-    for name in feature[2:end]
-        df = innerjoin(df, get_features_df(documents, name); on = id_names)
+function fill_features_df_instances!(df::DataFrame, documents, features_name)
+    for document in documents
+        features = Dict("instance_name" => document["_id"])
+        for feature_name in features_name
+            feature = get_feature(document, feature_name)
+            features[feature_name] = ismissing(feature) ? feature : string(feature)
+        end
+        push!(df, features)
     end
-    return df
 end
 
-
-"""
-    get_features_df(collection::Mongoc.Collection, feature)
-
-Return a DataFrame containing the list of document with the specified features.
-"""
-function get_features_df(collection::Mongoc.Collection, feature)
-    documents = get_all_document(collection)
-    return get_features_df(documents, feature)
-end
-
-"""
-    get_instance_decomposition_df(instance,
-                                  decomposition,
-                                  instance_feature,
-                                  decomposition_feature)
-
-Return a DataFrame containing the the innerjoin on `:instance_name` between the collections `instance` and `decomposition`.
-"""
-function get_instance_decomposition_df(instance,
-                                       decomposition,
-                                       instance_feature=["graph", "OPF"],
-                                       decomposition_feature=["clique", "solve", "options_src", "options_dst"])
-    instance_df = get_features_df(instance, instance_feature)
-    decomposition_df = get_features_df(decomposition, decomposition_feature)
-    return innerjoin(instance_df, decomposition_df, on = (:instance_name))
+function get_features_df(collection::Mongoc.Collection, compute_key::Bool=true)
+    @debug "compute_key: $compute_key"
+    if compute_key
+        @debug "Computing features keys"
+        result = compute_features_keys(collection)
+        @debug "result: $result"
+    end
+    collection_keys = collection.database["$(collection.name)_keys"]
+    if collection.name == "instances"
+        return get_features_df_instances(collection, collection_keys)
+    else
+        return get_features_df_decompositions(collection, collection_keys)
+    end
 end
