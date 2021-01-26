@@ -133,10 +133,17 @@ push_decomposition!(decomposition_collection,
 * [X] DecompositionDB
     * [X] Process data   
     * [X] Basic queries
+    * [ ] Update the tests
 * [ ] Generate
     * [X] Filter the edges
-    * [ ] Generate a decomposition given some options and a given number of edges
+    * [X] Generate a decomposition given some options and a given number of edges
 * [ ] Solve
     * [ ] Build a MOSEK model from the database
 * [ ] ReadFeatures
+    * [X] Graph
+    * [X] Cliques
+    * [ ] OPF
+    * [ ] Mixed
 * [ ] VisualizeFeatures
+    * [X] Dataframes of features
+* [ ] Update `DecompositionDB` usage in README
