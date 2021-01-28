@@ -3,7 +3,7 @@ using Random
 import Base:occursin
 
 include("./filteredges.jl")
-include("./utils/misc.jl")
+include("../../utils/misc.jl")
 
 const src_options = Dict(
     :degree_max => filter_vertices_degree_max,

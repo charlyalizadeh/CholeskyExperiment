@@ -4,9 +4,9 @@ using CSV
 
 include("./DecompositionDB/src/DecompositionDB.jl")
 include("./Generation/src/Generation.jl")
-include("./Generation/src/utils/chordalextension.jl")
-include("./Generation/src/decomposition.jl")
-include("./Generation/src/utils/constructgraph.jl")
+include("./utils/chordalextension.jl")
+include("./utils/constructgraph.jl")
+include("./utils/misc.jl")
 include("./ReadFeatures/src/ReadFeatures.jl")
 
 
@@ -60,30 +60,6 @@ function load_matpower_instance_by_name(manager::ExperimentManager, name::String
     return DecompositionDB.push_instance!(manager.instances, name, paths, features)
 end
 
-function fill_options_arguments(options, graph)
-    # TODO: I don't know what but I need to do something for this line
-    filled_options = Dict(key => convert(Dict{Symbol,Union{Int64, Base.OneTo{Int64}, AbstractGraph, Array{Int}, Array{Any}}}, val) for (key, val) in options)
-    for option in collect(keys(filled_options))
-        ms = collect(methods(Generation.dst_options[option]))
-        argnames = Generation.method_argnames(last(ms))[2:end]
-        cliques_arg = :cliques in argnames
-        choleskygraph_arg = :choleskygraph in argnames
-        if cliques_arg || choleskygraph_arg
-            if !cliques_arg
-                filled_options[option][:choleskygraph] = SimpleGraph(get_cholesky_graph(graph)[1])
-            else
-                cliques, nb_added_edges, choleskygraph = Generation.get_decomposition(graph)
-                filled_options[option][:cliques] = cliques
-                choleskygraph_arg && (filled_options[option][:choleskygraph] = SimpleGraph(choleskygraph))
-            end
-        end
-        if :graph in argnames
-            filled_options[option][:graph] = graph
-        end
-    end
-    return filled_options
-end
-
 function generate_decomposition_all(manager::ExperimentManager, options_src::Dict, options_dst::Dict, nb_edges=15, seed=nothing)
     paths_matpower = collect(DecompositionDB.get_all_matpower_path(manager.instances))
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
@@ -108,7 +84,7 @@ function generate_decomposition_all(manager::ExperimentManager, options_src::Dic
             continue
         end
         @debug "    Get the cliques"
-        cliques, nb_added_edges, chordal_graph = get_decomposition(graph)
+        cliques, nb_added_edges, chordal_graph = Generation.get_decomposition(graph)
         @debug "    Get the cliquetree"
         cliquetree = Generation.get_cliquetree(cliques)
         # Not nice

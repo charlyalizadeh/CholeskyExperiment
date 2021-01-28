@@ -137,15 +137,6 @@ function get_decomposition(collection::Mongoc.Collection, instance_name::String,
 end
 
 """
-    get_all_document(collection::Mongoc.Collection)
-
-Get all the documents in `collection` in the form of an array of `Mongoc.BSON` object.
-"""
-function get_all_document(collection::Mongoc.Collection)
-    return collect(collection)
-end
-
-"""
     get_all_matpower_path(collection::Mongoc.Collection)
 
 Get all the matpower path field in `collection` in the form of an array of `Mongoc.BSON` object.

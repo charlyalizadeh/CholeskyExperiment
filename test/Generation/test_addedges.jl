@@ -1,6 +1,6 @@
 using Test
 
-include("../src/addedges.jl")
+include("../../Generation/src/addedges.jl")
 
 @testset "addedges" begin
     @testset "check_options" begin
