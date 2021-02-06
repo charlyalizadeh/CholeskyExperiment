@@ -1,5 +1,6 @@
 using Mongoc
 using DataFrames
+using Statistics
 
 
 
@@ -95,11 +96,8 @@ function fill_features_df_instances!(df::DataFrame, documents, features_name)
 end
 
 function get_features_df(collection::Mongoc.Collection, compute_key::Bool=true)
-    @debug "compute_key: $compute_key"
     if compute_key
-        @debug "Computing features keys"
-        result = compute_features_keys(collection)
-        @debug "result: $result"
+        compute_features_keys(collection)
     end
     collection_keys = collection.database["$(collection.name)_keys"]
     if collection.name == "instances"
@@ -108,3 +106,49 @@ function get_features_df(collection::Mongoc.Collection, compute_key::Bool=true)
         return get_features_df_decompositions(collection, collection_keys)
     end
 end
+
+function build_features_stats_collection(collection::Mongoc.Collection, compute_key::Bool=true)
+    if compute_key
+        compute_features_keys(collection)
+    end
+    collection_keys = collection.database["$(collection.name)_keys"]
+    features_name = [feature["_id"] for feature in collection_keys]
+    accumulators = ""
+    for (index, key) in enumerate(features_name)
+        accumulator_name = replace(key, "." => "_")
+        accumulators = string(accumulators, """"$(accumulator_name)" : { "\$stdDevPop": "\$features.$(key)" }""")
+        if index < length(features_name)
+            accumulators = string(accumulators, ",")
+        end
+    end
+    aggregation = Mongoc.BSON("""[
+            { "\$group" : {
+                "_id": "\$_id.instance_name",
+                $(accumulators)
+            }}
+        ]""")
+    stats_collection = collection.database["$(collection.name)_stats"]
+    for d in Mongoc.aggregate(collection, aggregation)
+        push!(stats_collection, d)
+    end
+end
+
+function get_df_features_std(collection::Mongoc.Collection)
+    df = get_features_df(collection)
+    std_df = DataFrame()
+    for name in names(df)
+        name = Symbol(name)
+        name == Symbol("instance_name") && continue
+        df[!,name] = parse.(Float64,df[!,name])
+        #println(df[:, name])
+        df[:, name] = map(x -> (x - minimum(df[:, name])) / (maximum(df[:, name]) - minimum(df[:, name])), df[:, name])
+        print(std(df[:, name]))
+        std_df[:, name] = [std(df[:, name])]
+    end
+    return std_df
+end
+
+
+
+
+# 
