@@ -6,8 +6,6 @@ using DataStructures
 include("../../utils/misc.jl")
 
 
-
-
 function get_graph_features(graph::T, vweights=ones(nv(graph))) where T<:AbstractGraph
     graph_features = Dict()
     graph_features["nv"] = nv(graph)
@@ -15,11 +13,11 @@ function get_graph_features(graph::T, vweights=ones(nv(graph))) where T<:Abstrac
     graph_features["degree_mean"] = mean(degree(graph), weights(vweights))
     graph_features["degree_var"] = var(degree(graph), weights(vweights))
     graph_features["degree_max"] = Δ(graph)
-    println()
     graph_features["degree_min"] = δ(graph)
     graph_features["density"] = density(graph)
     return graph_features
 end
+
 
 function get_cliques_features(graph::T, cliques, cweights=ones(length(cliques))) where T<:AbstractGraph
     cliques_features = Dict()
@@ -37,7 +35,6 @@ function get_kernel_features(graph::T, vweights=ones(nv(graph))) where T<:Abstra
     kernel_graph = kernel(graph)
     return get_graph_features(kernel_graph)
 end
-
 
 
 function get_data_OPF(instance_path::String)
@@ -137,6 +134,7 @@ function get_data_OPF(instance_path::String)
     end
     return costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, NaN
 end
+
 
 function get_OPF_features(path_matpower)
     costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, generator_density = get_data_OPF(path_matpower)

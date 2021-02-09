@@ -134,11 +134,22 @@ end
 
 function generate_decomposition_all(manager::ExperimentManager, json_file::String)
     config = JSON.parsefile(json_file)
-    options_src = config["src"]
-    options_dst = config["dst"]
+    options_src = convertkeytosymbol(config["src"])
+    options_dst = convertkeytosymbol(config["dst"])
     nb_added_edges = config["nb_added_edges"]
     seed = config["seed"]
     generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
+end
+
+function generate_decomposition_all_mult(manager::ExperimentManager, json_file::String)
+    config = JSON.parsefile(json_file)
+    for (key, val) in config
+        options_src = convertkeytosymbol(val["src"])
+        options_dst = convertkeytosymbol(val["dst"])
+        nb_added_edges = val["nb_added_edges"]
+        seed = val["seed"]
+        generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
+    end
 end
 
 function generate_cholesky_all(manager::ExperimentManager)

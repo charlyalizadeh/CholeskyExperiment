@@ -88,3 +88,15 @@ function load_matpower(filename)
     rm(instance_name * ".temp")
     return data
 end
+
+function convertkeytosymbol(dict)
+    symboldict = Dict()
+    for (key, val) in dict
+        if typeof(val) <: Dict
+            symboldict[Symbol(key)] = Dict(Symbol(subkey) => subval for (subkey, subval) in dict[key])
+        else
+            symboldict[Symbol(key)] = val
+        end
+    end
+    return symboldict
+end

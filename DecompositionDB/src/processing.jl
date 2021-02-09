@@ -140,15 +140,8 @@ function get_df_features_std(collection::Mongoc.Collection)
         name = Symbol(name)
         name == Symbol("instance_name") && continue
         df[!,name] = parse.(Float64,df[!,name])
-        #println(df[:, name])
         df[:, name] = map(x -> (x - minimum(df[:, name])) / (maximum(df[:, name]) - minimum(df[:, name])), df[:, name])
-        print(std(df[:, name]))
         std_df[:, name] = [std(df[:, name])]
     end
     return std_df
 end
-
-
-
-
-# 
