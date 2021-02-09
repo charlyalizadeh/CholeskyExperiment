@@ -1,6 +1,7 @@
 using LightGraphs
 using Mongoc
 using CSV
+import JSON
 
 include("./DecompositionDB/src/DecompositionDB.jl")
 include("./Generation/src/Generation.jl")
@@ -18,8 +19,8 @@ struct ExperimentManager
     decompositions::Mongoc.Collection
 end
 
-function ExperimentManager()
-    client = Mongoc.Client()
+function ExperimentManager(port::String="mongodb://localhost:27017")
+    client = Mongoc.Client(port)
     try
         Mongoc.ping(client)
     catch err
@@ -129,6 +130,15 @@ function generate_decomposition_all(manager::ExperimentManager, options_src::Dic
             @info "        Insertion succeeded"
         end
     end
+end
+
+function generate_decomposition_all(manager::ExperimentManager, json_file::String)
+    config = JSON.parsefile(json_file)
+    options_src = config["src"]
+    options_dst = config["dst"]
+    nb_added_edges = config["nb_added_edges"]
+    seed = config["seed"]
+    generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
 end
 
 function generate_cholesky_all(manager::ExperimentManager)

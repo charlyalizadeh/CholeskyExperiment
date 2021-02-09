@@ -26,6 +26,8 @@ function construct_test_decompositions(collection::Mongoc.Collection)
                         [[1, 5], [6, 7]],
                         [[1, 2, 3], [4, 5, 6, 7], [8, 7]],
                         [[1, 2], [2, 3]],
+                        Dict(),
+                        Dict(),
                         Mongoc.BSON("clique" => Mongoc.BSON("clique1" => 1, "clique2" => 2), 
                              "solve" => Mongoc.BSON("solve1" => 1, "solve2" => 2),
                              "options_src" => Mongoc.BSON("options_src1" => 1, "options_src2" => 2),
@@ -36,6 +38,8 @@ function construct_test_decompositions(collection::Mongoc.Collection)
                         [[5, 8], [3, 2]], 
                         [[1, 2], [2, 3, 4], [3, 4, 5], [5, 6, 7, 8]],
                         [[1, 2], [2, 3], [3, 4]],
+                        Dict(),
+                        Dict(),
                         Mongoc.BSON("clique" => Mongoc.BSON("clique1" => 1, "clique2" => 2), 
                              "solve" => Mongoc.BSON("solve1" => 1, "solve2" => 2),
                              "options_src" => Mongoc.BSON("options_src1" => 1, "options_src2" => 2),
@@ -46,6 +50,8 @@ function construct_test_decompositions(collection::Mongoc.Collection)
                         [[6, 7]],
                         [[1, 2, 3], [4, 5, 6, 7], [8, 7]],
                         [[1, 2], [2, 3]],
+                        Dict(),
+                        Dict(),
                         Mongoc.BSON("clique" => Mongoc.BSON("clique1" => 1, "clique2" => 2), 
                              "solve" => Mongoc.BSON("solve1" => 1, "solve2" => 2),
                              "options_src" => Mongoc.BSON("options_src1" => 1, "options_src2" => 2),
@@ -86,7 +92,7 @@ end
         @test instance_in_db(instances, "case118mod")
     end
     @testset "push_decomposition!" begin
-        push_decomposition!(decompositions, "case118mod", [[1, 2],[3, 5]], [], [])
+        push_decomposition!(decompositions, "case118mod", [[1, 2],[3, 5]], [], [], Dict(), Dict())
         @test decomposition_in_db(decompositions, "case118mod", [[1, 2],[3, 5]])
     end
     @testset "set_instance_features!" begin

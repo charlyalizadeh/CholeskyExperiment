@@ -147,3 +147,6 @@ push_decomposition!(decomposition_collection,
 * [ ] VisualizeFeatures
     * [X] Dataframes of features
 * [ ] Update `DecompositionDB` usage in README
+* [ ] Add docstring
+* [ ] Use hash function for decompositions `_id`
+* [ ] Clean functions/variables names

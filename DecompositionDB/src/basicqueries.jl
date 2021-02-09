@@ -206,3 +206,14 @@ Get all the matpower path field in `collection` in the form of an array of `Mong
 function get_all_matpower_path(collection::Mongoc.Collection)
     return Mongoc.find(collection, Mongoc.BSON(); options=Mongoc.BSON("projection" => Mongoc.BSON("paths.matpower" => true)))
 end
+
+
+function get_unsolved_decompositions_index(collection::Mongoc.Collection)
+    indexes = []
+    for (index, document) in enumerate(collection)
+        if haskey(document["features"], "solver") && haskey(document["features"]["solver"], "solving_time")
+            push!(indexes, index)
+        end
+    end
+    return indexes
+end
