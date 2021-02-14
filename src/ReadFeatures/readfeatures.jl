@@ -1,12 +1,4 @@
-using LightGraphs: AbstractGraph, nv, ne, Δ, δ, density, degree
-using Statistics
-using StatsBase
-using DataStructures
-
-include("../../utils/misc.jl")
-
-
-function get_graph_features(graph::T, vweights=ones(nv(graph))) where T<:AbstractGraph
+function get_graph_features(graph::AbstractGraph, vweights=ones(nv(graph)))
     graph_features = Dict()
     graph_features["nv"] = nv(graph)
     graph_features["ne"] = ne(graph)
@@ -18,8 +10,7 @@ function get_graph_features(graph::T, vweights=ones(nv(graph))) where T<:Abstrac
     return graph_features
 end
 
-
-function get_cliques_features(graph::T, cliques, cweights=ones(length(cliques))) where T<:AbstractGraph
+function get_cliques_features(graph::AbstractGraph, cliques, cweights=ones(length(cliques)))
     cliques_features = Dict()
     cliques_features["nb"] = length(cliques)
     cliques_size = [length(clique) for clique in cliques]
@@ -30,12 +21,10 @@ function get_cliques_features(graph::T, cliques, cweights=ones(length(cliques)))
     return cliques_features
 end
 
-
-function get_kernel_features(graph::T, vweights=ones(nv(graph))) where T<:AbstractGraph
+function get_kernel_features(graph::AbstractGraph, vweights=ones(nv(graph)))
     kernel_graph = kernel(graph)
     return get_graph_features(kernel_graph)
 end
-
 
 function get_data_OPF(instance_path::String)
     data = load_matpower(instance_path)
@@ -134,7 +123,6 @@ function get_data_OPF(instance_path::String)
     end
     return costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, NaN
 end
-
 
 function get_OPF_features(path_matpower)
     costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, generator_density = get_data_OPF(path_matpower)

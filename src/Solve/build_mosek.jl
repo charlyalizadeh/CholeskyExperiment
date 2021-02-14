@@ -1,5 +1,3 @@
-include("./read_data.jl")
-
 function treat_constants(MATRICES_with_CONSTANTS, CONSTRAINTS)
     #find constant rows
     index_none_column2 = findall(x -> x == "NONE", MATRICES_with_CONSTANTS[:,2])

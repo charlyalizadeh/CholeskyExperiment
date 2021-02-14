@@ -1,7 +1,7 @@
 using Test
 using Mongoc
 
-include("../../DecompositionDB/src/basicqueries.jl")
+include("../../src/DecompositionDB/basicqueries.jl")
 
 # TODO: Update the test
 function construct_test_instances(collection::Mongoc.Collection)

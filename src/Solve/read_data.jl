@@ -1,5 +1,3 @@
-import Base.Iterators: flatten
-
 function get_blocks(cliques)
     number_elements = length(collect(flatten(cliques)))
     blocks = Array{String,2}(undef, number_elements * 2, 2)

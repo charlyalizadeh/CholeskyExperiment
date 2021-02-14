@@ -1,10 +1,3 @@
-using LightGraphs
-using Random
-import Base:occursin
-
-include("./filteredges.jl")
-include("../../utils/misc.jl")
-
 const src_options = Dict(
     :degree_max => filter_vertices_degree_max,
     :degree_min => filter_vertices_degree_min,
@@ -37,7 +30,7 @@ const dst_options = Dict(
 )
 
 
-function check_options_src(options_src)
+function check_options_src(options_src::AbstractDict{Symbol})
     options_names = keys(options_src)
     if issubset((:degree_max, :degree_min), options_names) && options_src[:degree_max]["degree"] < options_src[:degree_min]["degree"]
         error(":degree_max cannot be strictly inferior to :degree_min")
@@ -52,7 +45,7 @@ function check_options_src(options_src)
     end
 end
 
-function check_options_dst(options_dst)
+function check_options_dst(options_dst::AbstractDict{Symbol})
     check_options_src(options_dst)
     options_names = keys(options_dst)
     if issubset((:distance_max, :distance_min), options_names) && options_dst[:distance_max]["dist"] < options_dst[:distance_min]["dist"]
@@ -66,7 +59,7 @@ function check_options_dst(options_dst)
     end
 end
 
-function get_valid_srcs(vertices, options)
+function get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict{Symbol})
     for (option, args) in options
         args[:vertices] = vertices
         vertices = src_options[option](;args...)
@@ -77,7 +70,7 @@ function get_valid_srcs(vertices, options)
     return vertices
 end
 
-function get_valid_dsts(vertices, options, src)
+function get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Integer)
     for (option, args) in options
         args[:vertices] = vertices
         ms = collect(methods(dst_options[option]))
@@ -92,7 +85,7 @@ function get_valid_dsts(vertices, options, src)
     return vertices
 end
 
-function add_edge_by!(graph::T, options_src::Dict, options_dst::Dict, seed=nothing) where T<:AbstractGraph
+function add_edge_by!(graph::AbstractGraph, options_src::AbstractDict{Symbol}, options_dst::AbstractDict{Symbol}, seed=nothing)
     seed == nothing || Random.seed!(seed)
     src = nothing
     dst = nothing
@@ -116,7 +109,7 @@ function add_edge_by!(graph::T, options_src::Dict, options_dst::Dict, seed=nothi
     return [src, dst]
 end
 
-function add_edges_by!(graph::T, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing) where T<:AbstractGraph
+function add_edges_by!(graph::AbstractGraph, options_src::AbstractDict{Symbol}, options_dst::AbstractDict{Symbol}, nb_edges, seed=nothing)
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for i in 1:nb_edges
@@ -131,7 +124,7 @@ function add_edges_by!(graph::T, options_src::Dict, options_dst::Dict, nb_edges,
     return added_edges
 end
 
-function add_edges_by!(graphs::Array{T}, options_src::Dict, options_dst::Dict, nb_edges, seed=nothing) where T<:AbstractGraph
+function add_edges_by!(graphs::AbstractVector{AbstractGraph}, options_src::AbstractDict{Symbol}, options_dst::AbstractDict{Symbol}, nb_edges, seed=nothing)
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for graph in graphs
