@@ -69,23 +69,24 @@ end
 checkfor(data, line_ind, name) = (data[line_ind, 1] == name) || error("Expected ", name, " at line ", line_ind, ", got ", data[line_ind, 1], " instead.")
 
 function load_matpower(filename)
-    instance_name = split(filename, '.')[1]
-    touch(instance_name * ".temp")
+    instance_name = split(basename(filename), '.')[1]
+    touch("$instance_name.temp")
     f = open(filename)
-    out = open(instance_name * ".temp", "w")
+    out = open("$instance_name.temp", "w")
     # removing all ';' at end of lines
     while !eof(f)
         line = readline(f)
         if length(line) > 0 && line[1] != '%' && line[1] != 'f'
-        s = split(line, ";")
-        println(out, s[1])
+            s = split(line, ";")
+            println(out, s[1])
         end
     end
     close(f)
     close(out)
-
-    data = DelimitedFiles.readdlm(instance_name * ".temp")
-    rm(instance_name * ".temp")
+    @info "DelimitedFiles filename: $filename"
+    @info "DelimitedFiles instance_name: $instance_name"
+    data = DelimitedFiles.readdlm("$instance_name.temp")
+    rm(instance_name*".temp")
     return data
 end
 

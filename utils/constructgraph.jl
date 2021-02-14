@@ -1,24 +1,5 @@
 using DelimitedFiles, LightGraphs
 
-function load_matpower(filename)
-    instance_name = split(filename, '.')[1]
-    touch(instance_name*".temp")
-    f = open(filename)
-    out = open(instance_name*".temp", "w")
-    # removing all ';' at end of lines
-    while !eof(f)
-        line = readline(f)
-        if length(line) > 0 && line[1] != '%' && line[1] != 'f'
-            s = split(line, ";")
-            println(out, s[1])
-        end
-    end
-    close(f)
-    close(out)
-    data = DelimitedFiles.readdlm(instance_name*".temp")
-    rm(instance_name*".temp")
-    return data
-end
 
 function find_numarray(i_start, data)
     i_debut = i_start
@@ -45,6 +26,7 @@ function get_names_buses(data, nb_bus)
 end
 
 function construct_network_graph(instance_path::String)
+    "In construct_network_graph $instance_path"
     data = load_matpower(instance_path)
     ## Bus load and shunt information
     i_debut, i_fin = find_numarray(1, data)

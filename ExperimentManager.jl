@@ -62,6 +62,18 @@ function load_matpower_instance_by_name(manager::ExperimentManager, name::String
     return DecompositionDB.push_instance!(manager.instances, name, paths, features)
 end
 
+function load_matpower_instance_by_size(manager::ExperimentManager, min_size=0, max_size=10000, path_data::String="./data")
+    paths_matpower = readdir(joinpath(path_data, "matpower"))
+    for name in paths_matpower
+        print(joinpath(path_data, "matpower", name))
+        graph = construct_network_graph(joinpath(path_data, "matpower", name))
+        if nv(graph) >= min_size && nv(graph) <= max_size
+            name = basename(name)[1:end - 2]
+            load_matpower_instance_by_name(manager, name, path_data)
+        end
+    end
+end
+
 # Retrieve features
 function get_features_instance(graph, path_matpower)
     features = Dict("graph" => ReadFeatures.get_graph_features(graph))
@@ -141,6 +153,17 @@ function generate_decomposition_all(manager::ExperimentManager, json_file::Strin
     generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
 end
 
+function generate_decomposition_mult(manager::ExperimentManager, json_file::String, paths_matpower)
+    config = JSON.parsefile(json_file)
+    options_src = convertkeytosymbol(config["src"])
+    options_dst = convertkeytosymbol(config["dst"])
+    nb_added_edges = config["nb_added_edges"]
+    seed = config["seed"]
+    for path in paths_matpower
+        generate_decomposition(manager, path, options_src, options_dst, nb_added_edges, seed)
+    end
+end
+
 function generate_decomposition_all_mult(manager::ExperimentManager, json_file::String)
     config = JSON.parsefile(json_file)
     for (key, val) in config
@@ -149,6 +172,47 @@ function generate_decomposition_all_mult(manager::ExperimentManager, json_file::
         nb_added_edges = val["nb_added_edges"]
         seed = val["seed"]
         generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
+    end
+end
+
+function generate_decomposition(manager::ExperimentManager, path, options_src, options_dst, nb_added_edges, seed=nothing)
+    name = basename(path)[1:end - 2]
+    @info "    $name"
+    @info "        Constructing graph $path"
+    graph = construct_network_graph(path)
+    # Here we add the graph-specific argument we want to pass to the filters
+    @info "        Filling the options arguments"
+    options_src_copy = fill_options_arguments(options_src, graph)
+    options_dst_copy = fill_options_arguments(options_dst, graph)
+    @info "        Adding the edges"
+    added_edges = Generation.add_edges_by!(graph, options_src_copy, options_dst_copy, nb_added_edges, seed)
+    if DecompositionDB.decomposition_in_db(manager.decompositions, name, added_edges)
+        @warn "Decomposition already on database, cliques computation aborted"
+    end
+    @info "        Get the cliques"
+    cliques, nb_added_edges, chordal_graph = Generation.get_decomposition(graph)
+    @info "        Get the cliquetree"
+    cliquetree = Generation.get_cliquetree(cliques)
+    # Not nice
+    options_src_features = Dict(String(key) => Dict(String(key2) => val2 for (key2, val2) in val)
+                                for (key, val) in options_src)
+    options_dst_features = Dict(String(key) => Dict(String(key2) => val2 for (key2, val2) in val)
+                                for (key, val) in options_dst)
+    @info "        Get the features"
+    features = get_features_decomposition(graph, chordal_graph, nb_added_edges, cliques, cliquetree)
+    if !DecompositionDB.push_decomposition!(manager.decompositions,
+                                            name,
+                                            added_edges,
+                                            cliques,
+                                            cliquetree,
+                                            options_src_features,
+                                            options_dst_features,
+                                            nothing,
+                                            features)
+        @warn "The decomposition ($name, $add_edges) hasn't be inserted to the database"
+    else
+        DecompositionDB.add_decomposition_in_instance!(manager.instances, name, added_edges)
+        @info "        Insertion succeeded"
     end
 end
 
