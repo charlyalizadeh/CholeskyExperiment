@@ -1,8 +1,8 @@
 # Style guide CholeskyExperiment
 
 In this project I try to follow the style guide provided by the [official julia documentation](https://docs.julialang.org/en/v1/manual/style-guide/)
-However this style guide let a lot of place for arbitrary choices, I noticed that I work way better with very strict rules which I can follow without to much thinking.
-This is why I choose to add some style guide rule for this project.
+However this style guide lets a lot of place for arbitrary choices, I noticed that I work faster with very strict rules which I can follow without to much thinking.
+This is why I choose to add some style guide rules for this project.
 
 >> Those rules can vary a lot while this project is still under development
 
