@@ -33,11 +33,17 @@ function isdecomposition(collection::Mongoc.Collection, instance_name::String, a
 end
 
 """
-    push_instance!(collection::Mongoc.Collection, instance_name::String, paths::AbstractDict=Mongoc.BSON(), features::AbstractDict=Mongoc.BSON())
+    push_instance!(collection::Mongoc.Collection,
+                   instance_name::String,
+                   paths::Union{T, AbstractVector{T}}=Mongoc.BSON(),
+                   features::AbstractDict=Mongoc.BSON()) where T<:AbstractDict
 
 Insert an instance in `collection`.
 """
-function push_instance!(collection::Mongoc.Collection, instance_name::String, paths::AbstractDict=Mongoc.BSON(), features::AbstractDict=Mongoc.BSON())
+function push_instance!(collection::Mongoc.Collection,
+                        instance_name::String,
+                        paths::Union{T, AbstractVector{T}}=Mongoc.BSON(),
+                        features::AbstractDict=Mongoc.BSON()) where T<:AbstractDict
     if !is_instance_in_db(collection, instance_name)
         document = Mongoc.BSON("_id" => instance_name, "paths" => paths, "decompositions" => [], "features" => features)
         push!(collection, document)
