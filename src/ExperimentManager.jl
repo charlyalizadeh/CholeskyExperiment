@@ -1,9 +1,11 @@
 module ExperimentManager
 
+
 using LightGraphs
 using Mongoc
 using CSV
 import JSON
+import MPI
 
 include("DecompositionDB/DecompositionDB.jl")
 include("Generation/Generation.jl")
@@ -39,5 +41,6 @@ include("./getfeatures.jl")
 include("./loadinstance.jl")
 include("./generate.jl")
 include("./solve.jl")
+
 
 end # module
