@@ -4,9 +4,6 @@ Julia project to experiment with Cholesky decompositions in order to improve opt
 
 One way to solve an OPF instance is to relax it into a SDP problem. To improve the solving time of a SDP problem we can take advantage of the coefficients matrix sparsity and decompose it into multiple smaller matrices. One step in the decomposition is to compute the chordal extension of a graph thanks to a Cholesky factorization, this step is deterministic and will always gives us the same result for a given input. The resulted chordal extension has a big impact on the reformulation of the SDP problem and so on the solving time. Our goal is to build a machine learning model that can select the best decomposition between multiple ones. For that we need to generate a dataset of decomposition with their solving time.
 
->> For the following parts when we talk about the *Cholesky graph* we talk about the chordal extension of a graph where we didn't add any edges before applying the Cholesky factorisation.
-
-
 ## Requirements
 
  * [MongoDB](https://www.mongodb.com/fr) >= 3.0 
