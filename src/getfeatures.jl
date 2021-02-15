@@ -1,3 +1,20 @@
+function get_features_instance(graph, path_matpower)
+    features = Dict("graph" => ReadFeatures.get_graph_features(graph))
+    merge!(features, Dict("OPF" => ReadFeatures.get_OPF_features(path_matpower)))
+    merge!(features, Dict("kernel" => ReadFeatures.get_kernel_features(graph)))
+    return features
+end
+
+function get_features_decomposition(pre_chordal_graph, chordal_graph, nb_added_edges, cliques, cliquetree)
+    features = Mongoc.BSON("nb_added_edges_chordal_extension" => nb_added_edges)
+    chordal_graph_features = Mongoc.BSON("chordal_graph" => ReadFeatures.get_graph_features(chordal_graph))
+    pre_chordal_graph_features = Mongoc.BSON("pre_chordal_graph" => ReadFeatures.get_graph_features(pre_chordal_graph))
+    cliques_features = Mongoc.BSON("cliques" => ReadFeatures.get_cliques_features(chordal_graph, cliques))
+    kernel_graph_features = Mongoc.BSON("kernel" => ReadFeatures.get_kernel_features(pre_chordal_graph))
+    merge!(features, chordal_graph_features, pre_chordal_graph_features, cliques_features, kernel_graph_features)
+    return features
+end
+
 function get_features_df(collection::Mongoc.Collection)
     if collection.name == "instances"
         return DecompositionDB.get_features_df(manager.instances)
