@@ -1,3 +1,8 @@
+"""
+    solve_sdp(instance_name, cliques, cliquetree, path_opf_ctr, path_opf_mat; time_limit=100000.0)
+
+Solve an SDP cliques decompositions.
+"""
 function solve_sdp(instance_name, cliques, cliquetree, path_opf_ctr, path_opf_mat; time_limit=100000.0)
     REPO = "OPF"
     objscale = 4 #0 if no scaling

@@ -1,6 +1,5 @@
 using DelimitedFiles, LightGraphs
 
-
 function find_numarray(i_start, data)
     i_debut = i_start
     while !isa(data[i_debut, 1], Int)

@@ -1,8 +1,8 @@
 using Test
 using LightGraphs
 
-include("../../src/Generation/filteredges.jl")
-include("../../src/Generation/addedges.jl")
+include("../../src/Generate/filteredges.jl")
+include("../../src/Generate/addedges.jl")
 
 @testset "addedges" begin
     @testset "check_options" begin

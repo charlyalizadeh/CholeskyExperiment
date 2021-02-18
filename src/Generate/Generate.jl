@@ -1,4 +1,4 @@
-module Generation
+module Generate
 
 
 using LightGraphs

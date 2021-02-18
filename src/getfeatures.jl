@@ -1,3 +1,8 @@
+"""
+    get_features_instance(graph, path_matpower)
+
+Return the dict of the instances features.
+"""
 function get_features_instance(graph, path_matpower)
     features = Dict("graph" => ReadFeatures.get_graph_features(graph))
     merge!(features, Dict("OPF" => ReadFeatures.get_OPF_features(path_matpower)))
@@ -5,6 +10,11 @@ function get_features_instance(graph, path_matpower)
     return features
 end
 
+"""
+    get_features_decomposition(pre_chordal_graph, chordal_graph, nb_added_edges, cliques, cliquetree)
+
+Return the dict of the decompositions features.
+"""
 function get_features_decomposition(pre_chordal_graph, chordal_graph, nb_added_edges, cliques, cliquetree)
     features = Mongoc.BSON("nb_added_edges_chordal_extension" => nb_added_edges)
     chordal_graph_features = Mongoc.BSON("chordal_graph" => ReadFeatures.get_graph_features(chordal_graph))
@@ -15,6 +25,11 @@ function get_features_decomposition(pre_chordal_graph, chordal_graph, nb_added_e
     return features
 end
 
+"""
+    get_features_df(collection::Mongoc.Collection)
+
+Build the features dataframe of the collection passed in parameters.
+"""
 function get_features_df(collection::Mongoc.Collection)
     if collection.name == "instances"
         return DecompositionDB.get_features_df(manager.instances)
@@ -23,6 +38,11 @@ function get_features_df(collection::Mongoc.Collection)
     end
 end
 
+"""
+    export_features_df_to_csv(collection::Mongoc.Collection, path="./data/")
+
+Export the features dataframe of `collection` in a csv file.
+"""
 function export_features_df_to_csv(collection::Mongoc.Collection, path="./data/")
     filepath = joinpath(path, "$(collection.name)_features.csv")
     df = get_features_df(collection)

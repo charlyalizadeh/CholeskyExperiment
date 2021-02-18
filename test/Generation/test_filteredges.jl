@@ -3,7 +3,7 @@ using Test
 
 include("../../src/utils/filters.jl")
 include("../../src/utils/maximalcliques.jl")
-include("../../src/Generation/filteredges.jl")
+include("../../src/Generate/filteredges.jl")
 
 @testset "filteredges" begin
     @testset "degree" begin

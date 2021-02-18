@@ -1,4 +1,17 @@
-function get_graph_features(graph::AbstractGraph, vweights=ones(nv(graph)))
+"""
+    getfeatures_graph(graph::AbstractGraph, vweights=ones(nv(graph)))
+
+Get the graph features `graph`. Some features (denoted (w)) can be weighted per vertex using `vweights`.
+Those features are:
+    * Number of vertex
+    * Number of edges
+    * Degree mean (w)
+    * Degree variation (w)
+    * Degree max
+    * Degree min
+    * Density
+"""
+function getfeatures_graph(graph::AbstractGraph, vweights=ones(nv(graph)))
     graph_features = Dict()
     graph_features["nv"] = nv(graph)
     graph_features["ne"] = ne(graph)
@@ -10,7 +23,18 @@ function get_graph_features(graph::AbstractGraph, vweights=ones(nv(graph)))
     return graph_features
 end
 
-function get_cliques_features(graph::AbstractGraph, cliques, cweights=ones(length(cliques)))
+"""
+    getfeatures_cliques(graph::AbstractGraph, cliques, cweights=ones(length(cliques)))
+
+Get the cliques features of `graph`. Some features (denoted (w)) can be weighted per vertex using `vweights`.
+Those features are:
+    * Number of cliques
+    * Clique size mean (w)
+    * Clique size variation (w)
+    * Clique size max
+    * Clique size min
+"""
+function getfeatures_cliques(graph::AbstractGraph, cliques, cweights=ones(length(cliques)))
     cliques_features = Dict()
     cliques_features["nb"] = length(cliques)
     cliques_size = [length(clique) for clique in cliques]
@@ -21,11 +45,54 @@ function get_cliques_features(graph::AbstractGraph, cliques, cweights=ones(lengt
     return cliques_features
 end
 
-function get_kernel_features(graph::AbstractGraph, vweights=ones(nv(graph)))
+"""
+    getfeatures_kernel(graph::AbstractGraph, vweights=ones(nv(graph)))
+
+Get the kernel features of `graph`. The kernel being a subgraph of `graph` those features corresponds to graph features.
+See also [`get_graph_features`].
+"""
+function getfeatures_kernel(graph::AbstractGraph, vweights=ones(nv(graph)))
     kernel_graph = kernel(graph)
     return get_graph_features(kernel_graph)
 end
 
+"""
+    getfeatures_OPF(path_matpower)
+
+Get the OPF features from a matpower file.
+Those features are:
+    * The generators costs
+    * The loads
+    * The shunts
+    * The voltage bounds
+    * The realpower bounds
+    * The max current
+    * The generators density
+"""
+function getfeatures_OPF(path_matpower)
+    costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, generator_density = get_data_OPF(path_matpower)
+    costs_generators = [[parse(Int, key[5:end]), costs_generators[key]...] for key in keys(costs_generators)]
+    shunts = [[parse(Int, key[5:end]), real(shunts[key]), imag(shunts[key])] for key in keys(shunts)]
+    loads = [[parse(Int, key[5:end]), real(loads[key]), imag(loads[key])] for key in keys(loads)]
+    bounds_voltage = [[parse(Int, key[5:end]), bounds_voltage[key]...] for key in keys(bounds_voltage)]
+    bounds_realpower = [[parse(Int, key[5:end]), bounds_realpower[key]...] for key in keys(bounds_realpower)]
+    max_current = [[parse(Int, key[1][5:end]), parse(Int, key[2][5:end]), max_current[key]] for key in keys(max_current)]
+    features = Dict("costs_generators" => costs_generators,
+                    "loads" => loads,
+                    "shunts" => shunts,
+                    "bounds_voltage" => bounds_voltage,
+                    "bounds_realpower" => bounds_realpower,
+                    "max_current" => max_current,
+                    "generator_density" => generator_density
+                   )
+    return features
+end
+
+"""
+    get_data_OPF(instance_path::String)
+
+Retrieve the OPF related data from a matpower file.
+"""
 function get_data_OPF(instance_path::String)
     data = load_matpower(instance_path)
     costs_generators = Dict{String, Tuple{Float64, Float64}}() # bus g => (cg, kg)
@@ -124,21 +191,3 @@ function get_data_OPF(instance_path::String)
     return costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, NaN
 end
 
-function get_OPF_features(path_matpower)
-    costs_generators, loads, shunts, bounds_voltage, bounds_realpower, bounds_imagpower, max_current, generator_density = get_data_OPF(path_matpower)
-    costs_generators = [[parse(Int, key[5:end]), costs_generators[key]...] for key in keys(costs_generators)]
-    shunts = [[parse(Int, key[5:end]), real(shunts[key]), imag(shunts[key])] for key in keys(shunts)]
-    loads = [[parse(Int, key[5:end]), real(loads[key]), imag(loads[key])] for key in keys(loads)]
-    bounds_voltage = [[parse(Int, key[5:end]), bounds_voltage[key]...] for key in keys(bounds_voltage)]
-    bounds_realpower = [[parse(Int, key[5:end]), bounds_realpower[key]...] for key in keys(bounds_realpower)]
-    max_current = [[parse(Int, key[1][5:end]), parse(Int, key[2][5:end]), max_current[key]] for key in keys(max_current)]
-    features = Dict("costs_generators" => costs_generators,
-                    "loads" => loads,
-                    "shunts" => shunts,
-                    "bounds_voltage" => bounds_voltage,
-                    "bounds_realpower" => bounds_realpower,
-                    "max_current" => max_current,
-                    "generator_density" => generator_density
-                   )
-    return features
-end

@@ -30,6 +30,11 @@ const dst_options = Dict(
 )
 
 
+"""
+    check_options_src(options_src::AbstractDict{Symbol})
+
+Check if the sources options are valids.
+"""
 function check_options_src(options_src::AbstractDict{Symbol})
     options_names = keys(options_src)
     if issubset((:degree_max, :degree_min), options_names) && options_src[:degree_max]["degree"] < options_src[:degree_min]["degree"]
@@ -45,6 +50,11 @@ function check_options_src(options_src::AbstractDict{Symbol})
     end
 end
 
+"""
+    check_options_dst(options_dst::AbstractDict{Symbol})
+
+Check if the destinations options are valids.
+"""
 function check_options_dst(options_dst::AbstractDict{Symbol})
     check_options_src(options_dst)
     options_names = keys(options_dst)
@@ -59,6 +69,11 @@ function check_options_dst(options_dst::AbstractDict{Symbol})
     end
 end
 
+"""
+    get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict{Symbol})
+
+Return the vertices in `vertices` validating the options passed in parameters.
+"""
 function get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict{Symbol})
     for (option, args) in options
         args[:vertices] = vertices
@@ -70,6 +85,11 @@ function get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict
     return vertices
 end
 
+"""
+    get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Integer)
+
+Return the vertices in `vertives` validating the options passed in parameters.
+"""
 function get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Integer)
     for (option, args) in options
         args[:vertices] = vertices
@@ -85,7 +105,19 @@ function get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Sym
     return vertices
 end
 
-function add_edge_by!(graph::AbstractGraph, options_src::AbstractDict{Symbol}, options_dst::AbstractDict{Symbol}, seed=nothing)
+"""
+    add_edge_by!(graph::AbstractGraph,
+                 options_src::AbstractDict{Symbol},
+                 options_dst::AbstractDict{Symbol},
+                 seed=nothing)
+
+Add a single edge to `graph` validating the options passed in parameters.
+If no edge corresponds to the options then the function returns `nothing`.
+"""
+function add_edge_by!(graph::AbstractGraph,
+                      options_src::AbstractDict{Symbol},
+                      options_dst::AbstractDict{Symbol},
+                      seed=nothing)
     seed == nothing || Random.seed!(seed)
     src = nothing
     dst = nothing
@@ -109,7 +141,18 @@ function add_edge_by!(graph::AbstractGraph, options_src::AbstractDict{Symbol}, o
     return [src, dst]
 end
 
-function add_edges_by!(graph::AbstractGraph, options_src::AbstractDict{Symbol}, options_dst::AbstractDict{Symbol}, nb_edges, seed=nothing)
+"""
+    add_edges_by!(graph::AbstractGraph,
+                  options_src::AbstractDict{Symbol},
+                  options_dst::AbstractDict{Symbol},
+                  nb_edges, seed=nothing)
+
+Add multiple edges to `graph` validating the options passed in parameters.
+"""
+function add_edges_by!(graph::AbstractGraph,
+                       options_src::AbstractDict{Symbol},
+                       options_dst::AbstractDict{Symbol},
+                       nb_edges, seed=nothing)
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for i in 1:nb_edges
@@ -124,7 +167,18 @@ function add_edges_by!(graph::AbstractGraph, options_src::AbstractDict{Symbol}, 
     return added_edges
 end
 
-function add_edges_by!(graphs::AbstractVector{AbstractGraph}, options_src::AbstractDict{Symbol}, options_dst::AbstractDict{Symbol}, nb_edges, seed=nothing)
+"""
+    add_edges_by!(graphs::AbstractVector{AbstractGraph},
+                  options_src::AbstractDict{Symbol},
+                  options_dst::AbstractDict{Symbol},
+                  nb_edges, seed=nothing)
+
+Add multiple edges to all the graph in `graphs` validating the options passed in parameters.
+"""
+function add_edges_by!(graphs::AbstractVector{AbstractGraph},
+                       options_src::AbstractDict{Symbol},
+                       options_dst::AbstractDict{Symbol},
+                       nb_edges, seed=nothing)
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for graph in graphs

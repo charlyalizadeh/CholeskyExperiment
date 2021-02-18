@@ -8,16 +8,13 @@ import JSON
 import MPI
 
 include("DecompositionDB/DecompositionDB.jl")
-include("Generation/Generation.jl")
+include("Generate/Generate.jl")
 include("Solve/Solve.jl")
 include("ReadFeatures/ReadFeatures.jl")
 include("utils/chordalextension.jl")
 include("utils/constructgraph.jl")
 include("utils/misc.jl")
 
-# TODO: Docstring
-
-# ExperimentManager definition and constructor
 struct ExperimentManager
     instances::Mongoc.Collection
     decompositions::Mongoc.Collection

@@ -1,4 +1,15 @@
-function load_instance_by_paths(manager::ExperimentManager, path_matpower::String, path_OPF_ctr::String, path_OPF_mat::String)
+"""
+    load_instance_by_paths(manager::ExperimentManager,   
+                           path_matpower::String,
+                           path_OPF_ctr::String,
+                           path_OPF_mat::String)
+
+Load one instance in the database using its matpower and OPF files.
+"""
+function load_instance_by_paths(manager::ExperimentManager,
+                                path_matpower::String,
+                                path_OPF_ctr::String,
+                                path_OPF_mat::String)
     name = basename(path_matpower)[1:end - 2]
     paths = Mongoc.BSON("matpower" => path_matpower, "OPF_ctr" => path_OPF_ctr, "OPF_mat" => path_OPF_mat)
     graph = construct_network_graph(path_matpower)
@@ -6,7 +17,18 @@ function load_instance_by_paths(manager::ExperimentManager, path_matpower::Strin
     return DecompositionDB.push_instance!(manager.instances, name, paths)
 end
 
-function load_matpower_instance_by_name(manager::ExperimentManager, name::String, path_matpower::String, path_OPF::String)
+"""
+    load_instance_by_name(manager::ExperimentManager,
+                          name::String,
+                          path_matpower::String,
+                          path_OPF::String)
+
+Load one instance by its name and matpower/OPF files.
+"""
+function load_instance_by_name(manager::ExperimentManager,
+                               name::String,
+                               path_matpower::String,
+                               path_OPF::String)
     path_matpower = joinpath(path_matpower, "$(name).m")
     path_OPF_ctr = joinpath(path_OPF, "$(name)_sdp_ctr.txt")
     path_OPF_mat = joinpath(path_OPF, "$(name)_sdp_mat.txt")
@@ -16,7 +38,16 @@ function load_matpower_instance_by_name(manager::ExperimentManager, name::String
     return DecompositionDB.push_instance!(manager.instances, name, paths, features)
 end
 
-function load_matpower_instance_by_name(manager::ExperimentManager, name::String, path_data::String="./data")
+"""
+    load_instance_by_name(manager::ExperimentManager,
+                          name::String,
+                          path_data::String="./data")
+
+Load one instance by its name a single directory for matpower/OPF files.
+"""
+function load_instance_by_name(manager::ExperimentManager,
+                                        name::String,
+                                        path_data::String="./data")
     path_matpower = joinpath(path_data, "matpower/$(name).m")
     path_OPF_ctr = joinpath(path_data, "OPF/$(name)_sdp_ctr.txt")
     path_OPF_mat = joinpath(path_data, "OPF/$(name)_sdp_mat.txt")
@@ -26,7 +57,18 @@ function load_matpower_instance_by_name(manager::ExperimentManager, name::String
     return DecompositionDB.push_instance!(manager.instances, name, paths, features)
 end
 
-function load_matpower_instance_by_size(manager::ExperimentManager, min_size=0, max_size=10000, path_data::String="./data")
+"""
+    load_instance_by_size(manager::ExperimentManager,
+                          min_size=0,
+                          max_size=10000,
+                          path_data::String="./data")
+
+Load all the instance in the directory `path_data` with a graph size in [min_size, max_size]
+"""
+function load_instance_by_size(manager::ExperimentManager,
+                                        min_size=0,
+                                        max_size=10000,
+                                        path_data::String="./data")
     paths_matpower = readdir(joinpath(path_data, "matpower"))
     for name in paths_matpower
         print(joinpath(path_data, "matpower", name))

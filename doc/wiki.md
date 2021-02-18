@@ -101,3 +101,5 @@ When adding edges to a graph to test the impact on the solving time we could in 
 * Whether or not the source and destination of an edge are in the same clique in the Cholesky graph
 * Whether or not the source and destination of an edge have an edge connecting them in the Cholesky graph
 All the functions in the `filteredges.jl` file takes as input a vector of vertices and return the vertices in this vector validating some condition(s). Because of the way the implementation of inserting edges inside a graph works all the parameter for the filters functions are keyword arguments.
+
+## 

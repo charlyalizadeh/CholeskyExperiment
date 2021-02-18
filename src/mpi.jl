@@ -16,7 +16,12 @@
 #
 # Edit: I realize that even with an hash function I'm not sure I can use MPI to send array of string. Maybe if I send an array of fixed size string.
 
-function mpigenerate(manager::ExperimentManager)
+"""
+    mpigenerate(manager::ExperimentManager)
+
+Generate decompositions using MPI and the options specified in the file `configfile`
+"""
+function mpigenerate(manager::ExperimentManager, configfile::String="./config.json")
     MPI.Init()
     comm = MPI.COMM_WORLD
     rank = MPI.Comm_rank(comm)
@@ -63,6 +68,11 @@ function mpigenerate(manager::ExperimentManager)
     MPI.Finalize()
 end
 
+"""
+    mpisolve(manager::ExperimentManager)
+
+Solve decompositions using MPI.
+"""
 function mpisolve(manager::ExperimentManager)
     MPI.Init()
     comm = MPI.COMM_WORLD
