@@ -38,6 +38,7 @@ include("./getfeatures.jl")
 include("./loadinstance.jl")
 include("./generate.jl")
 include("./solve.jl")
+include("./mpi.jl")
 
 
 end # module
