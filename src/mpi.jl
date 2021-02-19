@@ -39,8 +39,8 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
         @info "[$rank] Spliting the generation between the taks"
         nb_instance_by_task = trunc(Int, length(paths_matpower) / size)
         @info "[$rank] Tasks: $size"
-        @info "[$rank] Instance(s: $(length(paths_matpower))")
-        @info "[$rank] Instance(s by taks: $(nb_instance_by_task)")
+        @info "[$rank] Instance(s: $(length(paths_matpower))"
+        @info "[$rank] Instance(s by taks: $(nb_instance_by_task)"
         for i in 1:size
             start = (i - 1) * nb_instance_by_task + 1
             if i == size
