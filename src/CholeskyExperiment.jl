@@ -1,4 +1,4 @@
-module ExperimentManager
+module CholeskyExperiment
 
 
 using LightGraphs
