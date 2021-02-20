@@ -27,7 +27,7 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
     rank = MPI.Comm_rank(comm)
     size = MPI.Comm_size(comm)
     @info "Rank: $rank"
-    @info "Size: $size"
+    rank == 0 && (@info "Size: $size")
     #run(`lsof`)
     manager = ExperimentManager("mongodb://$(ARGS[1]):27017")
     Mongoc.ping(Mongoc.Client("mongodb://$(ARGS[1]):27017"))
@@ -48,7 +48,7 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
             else
                 stop = i * nb_instance_by_task
             end
-            @info "[$rank] Stop: $stop   Start: $start"
+            @info "[$rank] Rank $i: $start => $stop"
             MPI.Isend([start, stop], i - 1, 0, comm)
         end
     end
@@ -64,7 +64,7 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
     MPI.Irecv!(paths_matpower_index, 0, 0, comm)
     start, stop = paths_matpower_index
     @info "[$rank] Generating..."
-    generate_decomposition_mult(manager, configfile, paths_matpower[start:stop])
+    generate_decomposition_mult(manager, configfile, paths_matpower[start:stop], rank)
     MPI.Finalize()
 end
 
@@ -108,10 +108,11 @@ function mpisolve(manager::ExperimentManager)
     MPI.Irecv!(decompositions_indexes, 0, 0, comm)
     decompositions = collect(manager.decompositions)
     @info "[$rank] Solving..."
-    for index in decompositions_indexes
+    for (i, index) in enumerate(decompositions_indexes)
         instance_name = decompositions[index]["_id"]["instance_name"]
         added_edges = decompositions[index]["_id"]["added_edges"]
         solve_decomposition(manager, instance_name, added_edges)
+        @info "[$rank] $i / $(length(decompositions_indexes))"
     end
     MPI.Finalize()
 end

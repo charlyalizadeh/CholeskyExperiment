@@ -53,7 +53,7 @@ See also [`get_graph_features`].
 """
 function getfeatures_kernel(graph::AbstractGraph, vweights=ones(nv(graph)))
     kernel_graph = kernel(graph)
-    return get_graph_features(kernel_graph)
+    return getfeatures_graph(kernel_graph)
 end
 
 """

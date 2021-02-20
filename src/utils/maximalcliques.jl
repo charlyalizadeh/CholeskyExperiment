@@ -57,7 +57,7 @@ end
 
 Return a perfect elimination ordering of `graph`.
 """
-function compute_perfect_elimination_ordering(graph::AbstractGraph)
+function compute_perfect_elimination_ordering(graph::AbstractGraph)::AbstractVector{Int}
     ordering = compute_lbfs(graph)
     return reverse(ordering)
 end
@@ -96,7 +96,7 @@ end
 
 Return the neighbors of `ordering[i]` in graph with index superior to i.
 """
-function get_later_neighbors(graph::AbstractGraph, ordering, i, exclude=[])
+function get_later_neighbors(graph::AbstractGraph, ordering, i, exclude=[])::AbstractVector{Int}
     later_neighbors = []
     for j in i+1:length(ordering)
         if !(j in exclude) && (ordering[j] in neighbors(graph, ordering[i]))
@@ -152,12 +152,12 @@ end
 
 Return the maximal cliques of `graph`. `graph` needs to be chordal.
 """
-function get_maximal_cliques(graph::AbstractGraph)
+function get_maximal_cliques(graph::AbstractGraph)::Vector{Vector{Int}}
     perfect_ordering = compute_perfect_elimination_ordering(graph)
     cliques = []
     for i in 1:length(perfect_ordering)
         later_neighbors = get_later_neighbors(graph, perfect_ordering, i)
-        potential_clique = [later_neighbors;perfect_ordering[i]]
+        potential_clique = [later_neighbors;perfect_ordering[i]]::Vector{Int}
         if is_maximal_clique(graph, potential_clique, cliques)
             push!(cliques, potential_clique)
         end
@@ -170,7 +170,7 @@ end
 
 Return the clique tree and the distance matrix of the cliques in `cliques`.
 """
-function get_cliquetree(cliques)
+function get_cliquetree(cliques)::Vector{Vector{Int}}
     graph = SimpleGraph(length(cliques))
     dstmx = zeros(Int,length(cliques), length(cliques))
     for i in 1:length(cliques) - 1
@@ -184,7 +184,7 @@ function get_cliquetree(cliques)
         end
     end
     cliquetree = kruskal_mst(graph, dstmx; minimize = false)
-    cliquetree = [[edge.src, edge.dst] for edge in cliquetree]
+    cliquetree = [[edge.src, edge.dst]::Vector{Int} for edge in cliquetree]
     return cliquetree
 end
 

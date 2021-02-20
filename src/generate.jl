@@ -3,14 +3,10 @@ function generate_decomposition_all(manager::ExperimentManager, options_src::Dic
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
     for path in paths_matpower
         name = basename(path)[1:end - 2]
-        @info "    $name"
-        @info "        Constructing graph"
         graph = construct_network_graph(path)
         # Here we add the graph-specific argument we want to pass to the filters
-        @info "        Filling the options arguments"
         options_src_copy = fill_options_arguments(options_src, graph)
         options_dst_copy = fill_options_arguments(options_dst, graph)
-        @info "        Adding the edges"
         # Here we may generate a decomposition which is already in the database, two solutions:
         #     - We just check if the decompositions is in the database and avoid recomputing the cliques (which is computionaly expensive). This the solution for now
         #     - We check if the decompositions is in the database and if so we try to add another set of edges. This solutions may had a lot of computation 
@@ -21,16 +17,13 @@ function generate_decomposition_all(manager::ExperimentManager, options_src::Dic
             @warn "Decomposition already on database, cliques computation aborted"
             continue
         end
-        @info "        Get the cliques"
         cliques, nb_added_edges, chordal_graph = Generate.get_decomposition(graph)
-        @info "        Get the cliquetree"
         cliquetree = Generate.get_cliquetree(cliques)
         # Not nice
         options_src_features = Dict(String(key) => Dict(String(key2) => val2 for (key2, val2) in val)
                                     for (key, val) in options_src)
         options_dst_features = Dict(String(key) => Dict(String(key2) => val2 for (key2, val2) in val)
                                     for (key, val) in options_dst)
-        @info "        Get the features"
         features = get_features_decomposition(graph, chordal_graph, nb_added_edges, cliques, cliquetree)
         if !DecompositionDB.push_decomposition!(manager.decompositions,
                                                 name,
@@ -44,7 +37,6 @@ function generate_decomposition_all(manager::ExperimentManager, options_src::Dic
             @warn "The decomposition ($name, $add_edges) hasn't be inserted to the database"
         else
             DecompositionDB.add_decomposition_in_instance!(manager.instances, name, added_edges)
-            @info "        Insertion succeeded"
         end
     end
 end
@@ -58,14 +50,15 @@ function generate_decomposition_all(manager::ExperimentManager, json_file::Strin
     generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
 end
 
-function generate_decomposition_mult(manager::ExperimentManager, json_file::String, paths_matpower)
+function generate_decomposition_mult(manager::ExperimentManager, json_file::String, paths_matpower, rank::Union{Int,Nothing}=nothing)
     config = JSON.parsefile(json_file)
     options_src = convertkeytosymbol(config["src"])
     options_dst = convertkeytosymbol(config["dst"])
     nb_added_edges = config["nb_added_edges"]
     seed = config["seed"]
-    for path in paths_matpower
+    for (index, path) in enumerate(paths_matpower)
         generate_decomposition(manager, path, options_src, options_dst, nb_added_edges, seed)
+        @info "[$rank] $index/$(length(paths_matpower))"
     end
 end
 
@@ -82,28 +75,21 @@ end
 
 function generate_decomposition(manager::ExperimentManager, path, options_src, options_dst, nb_added_edges, seed=nothing)
     name = basename(path)[1:end - 2]
-    @info "    $name"
-    @info "        Constructing graph $path"
     graph = construct_network_graph(path)
     # Here we add the graph-specific argument we want to pass to the filters
-    @info "        Filling the options arguments"
     options_src_copy = fill_options_arguments(options_src, graph)
     options_dst_copy = fill_options_arguments(options_dst, graph)
-    @info "        Adding the edges"
     added_edges = Generate.add_edges_by!(graph, options_src_copy, options_dst_copy, nb_added_edges, seed)
-    if DecompositionDB.decomposition_in_db(manager.decompositions, name, added_edges)
+    if DecompositionDB.isdecomposition(manager.decompositions, name, added_edges)
         @warn "Decomposition already on database, cliques computation aborted"
     end
-    @info "        Get the cliques"
     cliques, nb_added_edges, chordal_graph = Generate.get_decomposition(graph)
-    @info "        Get the cliquetree"
     cliquetree = Generate.get_cliquetree(cliques)
     # Not nice
     options_src_features = Dict(String(key) => Dict(String(key2) => val2 for (key2, val2) in val)
                                 for (key, val) in options_src)
     options_dst_features = Dict(String(key) => Dict(String(key2) => val2 for (key2, val2) in val)
                                 for (key, val) in options_dst)
-    @info "        Get the features"
     features = get_features_decomposition(graph, chordal_graph, nb_added_edges, cliques, cliquetree)
     if !DecompositionDB.push_decomposition!(manager.decompositions,
                                             name,
@@ -117,7 +103,6 @@ function generate_decomposition(manager::ExperimentManager, path, options_src, o
         @warn "The decomposition ($name, $add_edges) hasn't be inserted to the database"
     else
         DecompositionDB.add_decomposition_in_instance!(manager.instances, name, added_edges)
-        @info "        Insertion succeeded"
     end
 end
 
@@ -126,14 +111,9 @@ function generate_cholesky_all(manager::ExperimentManager)
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
     for path in paths_matpower
         name = basename(path)[1:end - 2]
-        @info "    $name"
-        @info "        Constructing graph"
         graph = construct_network_graph(path)
-        @info "        Get the cliques"
         cliques, nb_added_edges, chordal_graph = Generate.get_decomposition(graph)
-        @info "        Get the cliquetree"
         cliquetree = Generate.get_cliquetree(cliques)
-        @info "        Get the features"
         features = get_features_decomposition(graph, chordal_graph, nb_added_edges, cliques, cliquetree)
         if !DecompositionDB.push_decomposition!(manager.decompositions,
                                                 name,
@@ -147,7 +127,6 @@ function generate_cholesky_all(manager::ExperimentManager)
             @warn "The decomposition ($name) hasn't be inserted to the database"
         else
             DecompositionDB.add_decomposition_in_instance!(manager.instances, name, [])
-            @info "        Insertion succeeded"
         end
     end
 end

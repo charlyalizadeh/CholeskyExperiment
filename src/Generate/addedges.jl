@@ -70,11 +70,11 @@ function check_options_dst(options_dst::AbstractDict{Symbol})
 end
 
 """
-    get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict{Symbol})
+    get_valid_srcs(vertices::AbstractVector{Int}, options::AbstractDict{Symbol})
 
 Return the vertices in `vertices` validating the options passed in parameters.
 """
-function get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict{Symbol})
+function get_valid_srcs(vertices::AbstractVector{Int}, options::AbstractDict{Symbol})
     for (option, args) in options
         args[:vertices] = vertices
         vertices = src_options[option](;args...)
@@ -86,11 +86,11 @@ function get_valid_srcs(vertices::AbstractVector{Integer}, options::AbstractDict
 end
 
 """
-    get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Integer)
+    get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Int)
 
 Return the vertices in `vertives` validating the options passed in parameters.
 """
-function get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Integer)
+function get_valid_dsts(vertices::AbstractVector{Int}, options::AbstractDict{Symbol}, src::Int)
     for (option, args) in options
         args[:vertices] = vertices
         ms = collect(methods(dst_options[option]))
@@ -117,7 +117,7 @@ If no edge corresponds to the options then the function returns `nothing`.
 function add_edge_by!(graph::AbstractGraph,
                       options_src::AbstractDict{Symbol},
                       options_dst::AbstractDict{Symbol},
-                      seed=nothing)
+                      seed=nothing)::Vector{Int}
     seed == nothing || Random.seed!(seed)
     src = nothing
     dst = nothing
@@ -152,7 +152,7 @@ Add multiple edges to `graph` validating the options passed in parameters.
 function add_edges_by!(graph::AbstractGraph,
                        options_src::AbstractDict{Symbol},
                        options_dst::AbstractDict{Symbol},
-                       nb_edges, seed=nothing)
+                       nb_edges, seed=nothing)::Vector{Vector{Int}}
     seed == nothing || Random.seed!(seed)
     added_edges = []
     for i in 1:nb_edges
