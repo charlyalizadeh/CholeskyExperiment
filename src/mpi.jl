@@ -31,10 +31,10 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
     #run(`lsof`)
     manager = ExperimentManager("mongodb://$(ARGS[1]):27017")
     Mongoc.ping(Mongoc.Client("mongodb://$(ARGS[1]):27017"))
-    @info "[$rank] Connected to mongodb://$(ARGS[1]:27017)"
+    @info "[$rank] Connected to mongodb://$(ARGS[1]):27017)"
     root = 0
     if rank == root
-        paths_matpower = collect(DecompositionDB.get_all_matpower_path(manager.instances))
+        paths_matpower = collect(DecompositionDB.getmatpowerpath_all(manager.instances))
         paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
         @info "[$rank] Spliting the generation between the taks"
         nb_instance_by_task = trunc(Int, length(paths_matpower) / size)
@@ -53,7 +53,7 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
         end
     end
     MPI.Barrier(comm)
-    paths_matpower = collect(DecompositionDB.get_all_matpower_path(manager.instances))
+    paths_matpower = collect(DecompositionDB.getmatpowerpath_all(manager.instances))
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
     @info "[$rank] Retrieving number of instances"
     status = MPI.Probe(0, 0, comm)
@@ -64,7 +64,7 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
     MPI.Irecv!(paths_matpower_index, 0, 0, comm)
     start, stop = paths_matpower_index
     @info "[$rank] Generating..."
-    generate_decomposition_mult(manager, "/home/dist/charly-kyan.alizadeh/config.json", paths_matpower[start:stop])
+    generate_decomposition_mult(manager, configfile, paths_matpower[start:stop])
     MPI.Finalize()
 end
 
@@ -84,7 +84,7 @@ function mpisolve(manager::ExperimentManager)
     # Send data to all other comm
     if rank == root
         @info "[$rank] Spliting resolution between the tasks"
-        decompositions_index = DecompositionDB.get_unsolved_decompositions_index(manager.decompositions)
+        decompositions_index = DecompositionDB.getunsolved_index(manager.decompositions)
         nb_decomposition_unsolved = length(decompositions_index)
         nb_decomposition_by_task = nb_decomposition_unsolved / size
         @info "[$rank]    Tasks: $size"
