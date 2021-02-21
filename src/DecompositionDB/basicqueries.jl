@@ -252,7 +252,7 @@ Get the index in the collect(collection) array of all unsolved decomposition.
 function getunsolved_index(collection::Mongoc.Collection)
     indexes = []
     for (index, document) in enumerate(collection)
-        if haskey(document["features"], "solver") && haskey(document["features"]["solver"], "solving_time")
+        if !haskey(document["features"], "solver") || !haskey(document["features"]["solver"], "solving_time")
             push!(indexes, index)
         end
     end
