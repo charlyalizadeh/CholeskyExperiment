@@ -74,7 +74,6 @@ function load_instance_by_size(manager::ExperimentManager,
                                path_data::String="./data")
     paths_matpower = readdir(joinpath(path_data, "matpower"))
     for name in paths_matpower
-        print(joinpath(path_data, "matpower", name))
         graph = construct_network_graph(joinpath(path_data, "matpower", name))
         if nv(graph) >= min_size && nv(graph) <= max_size
             name = basename(name)[1:end - 2]

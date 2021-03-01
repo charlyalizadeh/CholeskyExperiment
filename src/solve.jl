@@ -30,10 +30,10 @@ end
 
 Retrieve the data from the database and solve one decomposition.
 """
-function solve_decomposition(manager::ExperimentManager, instance_name, added_edges; resolve=false)
+function solve_decomposition(manager::ExperimentManager, instance_name::String, added_edges::AbstractVector{N}; resolve=false) where N<:AbstractVector{Int}
     paths = DecompositionDB.getOPFpath_one(manager.instances, instance_name)
-    path_opf_ctr = paths["OPF_ctr"]
-    path_opf_mat = paths["OPF_mat"]
+    path_opf_ctr = paths["ctr"]
+    path_opf_mat = paths["mat"]
     solve_decomposition(manager, instance_name, added_edges, path_opf_ctr, path_opf_mat; resolve=resolve)
 end
 
@@ -42,10 +42,10 @@ end
 
 Solve one decomposition.
 """
-function solve_decomposition(manager::ExperimentManager, instance_name, added_edges, path_opf_ctr, path_opf_mat; resolve=false)
+function solve_decomposition(manager::ExperimentManager, instance_name::String, added_edges::AbstractVector{N}, path_opf_ctr::String, path_opf_mat::String; resolve::Bool=false) where N<:AbstractVector{Int}
     decomposition = DecompositionDB.getdecomposition(manager.decompositions, instance_name, added_edges)
     instance_name = decomposition["_id"]["instance_name"]
-    added_edges = decomposition["_id"]["added_edges"]
+    added_edges::Vector{Vector{Int}} = decomposition["_id"]["added_edges"]
     if resolve || (!resolve && !DecompositionDB.issolved(manager.decompositions, instance_name, added_edges))
         cliques = decomposition["cliques"]
         cliquetree = decomposition["cliquetree"]

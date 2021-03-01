@@ -86,7 +86,7 @@ function mpisolve(manager::ExperimentManager)
         @info "[$rank] Spliting resolution between the tasks"
         decompositions_index = DecompositionDB.getunsolved_index(manager.decompositions)
         nb_decomposition_unsolved = length(decompositions_index)
-        nb_decomposition_by_task = nb_decomposition_unsolved / size
+        nb_decomposition_by_task = trunc(Int, nb_decomposition_unsolved / size)
         @info "[$rank]    Tasks: $size"
         @info "[$rank]    Decomposition(s): $nb_decomposition_unsolved"
         @info "[$rank]    Decomposition(s) by taks: $nb_decomposition_by_task"
@@ -94,7 +94,8 @@ function mpisolve(manager::ExperimentManager)
             start = (i - 1) * nb_decomposition_by_task + 1
             stop = i * nb_decomposition_by_task
             stop = stop > nb_decomposition_unsolved ? nb_decomposition_unsolved : stop
-            MPI.Isend(decompositons_index[start:stop], i - 1, 0, comm)
+            @info typeof(decompositions_index)
+            MPI.Isend(decompositions_index[start:stop], i - 1, 0, comm)
         end
     end
     MPI.Barrier(comm)
@@ -103,16 +104,16 @@ function mpisolve(manager::ExperimentManager)
     status = MPI.Probe(0, 0, comm)
     count = MPI.Get_count(status, Int)
     @info "[$rank] Count: $count"
-    decompositions_indexes = Array{Int}(undef, count)
+    decompositions_index = Array{Int}(undef, count)
     @info "[$rank] Retrieving decompositions indexes"
-    MPI.Irecv!(decompositions_indexes, 0, 0, comm)
+    MPI.Irecv!(decompositions_index, 0, 0, comm)
     decompositions = collect(manager.decompositions)
     @info "[$rank] Solving..."
-    for (i, index) in enumerate(decompositions_indexes)
+    for (i, index) in enumerate(decompositions_index)
         instance_name = decompositions[index]["_id"]["instance_name"]
-        added_edges = decompositions[index]["_id"]["added_edges"]
+        added_edges::Vector{Vector{Int}} = decompositions[index]["_id"]["added_edges"]
         solve_decomposition(manager, instance_name, added_edges)
-        @info "[$rank] $i / $(length(decompositions_indexes))"
+        @info "[$rank] $i / $(length(decompositions_index))"
     end
     MPI.Finalize()
 end
