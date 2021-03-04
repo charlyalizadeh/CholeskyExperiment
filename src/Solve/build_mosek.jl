@@ -52,9 +52,6 @@ function creating_and_solving_model(DIFFERENT_VAR, NB_BLOCKS, DIFFERENT_BLOCKS, 
     println("Dictionary linking blocks with their set of variables created")
 
     for (block, var_list) in block_var
-        if "VOLT_1007_Im" in var_list && "VOLT_1030_Im" in var_list
-            prinln("YESSS")
-        end
         for var1 in var_list
             for var2 in var_list
                 mat_var[(var1,var2)] = Dict{String,Any}()
