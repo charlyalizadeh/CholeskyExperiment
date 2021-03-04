@@ -90,7 +90,7 @@ end
 
 Populate `df` with the features of the documents in `documents`.
 """
-function fillfeatures!(df::DataFrame, documents::Vector{AbstractDict}, features_name::Vector{String}, collectiontype::Symbol)
+function fillfeatures!(df::DataFrame, documents::Vector{N}, features_name::Vector{String}, collectiontype::Symbol) where N<:AbstractDict
     for document in documents
         features = collectiontype == :instances ?
                         Dict("instance_name" => document["_id"]) :
@@ -111,6 +111,7 @@ Build a dataframe from the "features" field in `collection`.
 """
 function getfeaturesdf(collection::Mongoc.Collection; collection_keys=collection.database["$(collection.name)_keys"], collectiontype::Symbol=:name)
     isempty(collection_keys) && computefeatureskeys(collection)
+    print(collection)
     collectiontype == :name && (collectiontype = getcollectiontype(collection_keys))
     features_name = [feature["_id"] for feature in collection_keys]
     colnames = getcolnamesdict(collection_keys, features_name, collectiontype=collectiontype)

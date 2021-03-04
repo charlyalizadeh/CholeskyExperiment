@@ -13,7 +13,7 @@ end
 
 function fill_options_arguments(options, graph)
     # TODO: I don't know what but I need to do something for this line
-    filled_options = Dict(key => convert(Dict{Symbol,Union{Int64, Base.OneTo{Int64}, AbstractGraph, Array{Int}, Array{Any}}}, val) for (key, val) in options)
+    filled_options = Dict(key => convert(Dict{Symbol,Union{Int64, Base.OneTo{Int64}, AbstractGraph, Array{Int}, Vector{Vector{Int}}, Array{Any}}}, val) for (key, val) in options)
     for option in collect(keys(filled_options))
         ms = collect(methods(Generate.dst_options[option]))
         argnames = Generate.method_argnames(last(ms))[2:end]

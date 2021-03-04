@@ -125,7 +125,7 @@ Add/Update/Replace the field "features" in the document corresponding to "_id" =
 """
 function setfeatures_instance!(collection::Mongoc.Collection, instance_name::String, features::AbstractDict)
     selector = Mongoc.BSON("_id" => instance_name)
-    set_features!(collection, selector, features)
+    setfeatures!(collection, selector, features)
 end
 
 """
@@ -135,7 +135,7 @@ Add/Update/Replace the field "features" in the document corresponding to "_id" =
 """
 function setfeatures_decomposition!(collection::Mongoc.Collection, instance_name::String, added_edges::AbstractVector{N}, features::AbstractDict) where N<:AbstractVector{Int}
     selector = Mongoc.BSON("_id" => Mongoc.BSON("instance_name" => instance_name, "added_edges" => added_edges))
-    set_features!(collection, selector, features)
+    setfeatures!(collection, selector, features)
 end
 
 """

@@ -8,11 +8,19 @@ function solve_all_decomposition(manager::ExperimentManager; resolve=false)
     for (index, decomposition) in enumerate(manager.decompositions)
         instance_name = decomposition["_id"]["instance_name"]
         added_edges = decomposition["_id"]["added_edges"]
+        if decomposition["_id"]["added_edges"] == []
+            added_edges = Vector{Vector{Int}}(undef, 0)
+        else
+            added_edges::Vector{Vector{Int}} = decomposition["_id"]["added_edges"]
+        end
         @info "Solving $index/$(length(manager.decompositions)): $instance_name, $(decomposition["features"]["chordal_graph"]["ne"]))"
-        if decomposition["features"]["chordal_graph"]["ne"] > 10000
+        if decomposition["features"]["chordal_graph"]["degree_var"] > 300 || decomposition["features"]["chordal_graph"]["ne"] > 12000
             continue
         end
         if resolve || (!resolve && !DecompositionDB.issolved(manager.decompositions, instance_name, added_edges))
+            if haskey(decomposition["features"], "solver")
+                @info "Resolving"
+            end
             cliques = decomposition["cliques"]
             cliquetree = decomposition["cliquetree"]
             instance_name = decomposition["_id"]["instance_name"]
@@ -20,7 +28,8 @@ function solve_all_decomposition(manager::ExperimentManager; resolve=false)
             path_opf_mat = path_dict[instance_name]["mat"]
             time, nb_iter = Solve.solve_sdp(instance_name, cliques, cliquetree, path_opf_ctr, path_opf_mat)
             features = Mongoc.BSON("solver" => Mongoc.BSON("solving_time" => time, "nb_iter" => nb_iter))
-            DecompositionDB.setfeatures_decomposition!(manager.decompositions, instance_name, decomposition["_id"]["added_edges"], features)
+            added_edges = decomposition["_id"]["added_edges"]
+            DecompositionDB.setfeatures_decomposition!(manager.decompositions, instance_name, added_edges, features)
         end
     end
 end

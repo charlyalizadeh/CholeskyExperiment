@@ -1,4 +1,4 @@
-function generate_decomposition_all(manager::ExperimentManager, options_src::Dict, options_dst::Dict, nb_edges=15, seed=nothing)
+function generate_decomposition_all(manager::ExperimentManager, options_src::Dict, options_dst::Dict, nb_edges=15; seed=nothing, verbose=false)
     paths_matpower = collect(DecompositionDB.getmatpowerpath_all(manager.instances))
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
     for path in paths_matpower
@@ -34,46 +34,47 @@ function generate_decomposition_all(manager::ExperimentManager, options_src::Dic
                                                 options_dst_features,
                                                 nothing,
                                                 features)
-            @warn "The decomposition ($name, $add_edges) hasn't be inserted to the database"
+            @warn "The decomposition ($name, $(length(added_edges))) hasn't be inserted to the database"
         else
             DecompositionDB.add_decomposition_in_instance!(manager.instances, name, added_edges)
+            verbose && @info "($name, $(length(added_edges))) inserted"
         end
     end
 end
 
-function generate_decomposition_all(manager::ExperimentManager, json_file::String)
+function generate_decomposition_all(manager::ExperimentManager, json_file::String; verbose=false)
     config = JSON.parsefile(json_file)
     options_src = convertkeytosymbol(config["src"])
     options_dst = convertkeytosymbol(config["dst"])
     nb_added_edges = config["nb_added_edges"]
     seed = config["seed"]
-    generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
+    generate_decomposition_all(manager, options_src, options_dst, nb_added_edges; seed=seed, verbose=verbose)
 end
 
-function generate_decomposition_mult(manager::ExperimentManager, json_file::String, paths_matpower, rank::Union{Int,Nothing}=nothing)
+function generate_decomposition_mult(manager::ExperimentManager, json_file::String, paths_matpower, rank::Union{Int,Nothing}=nothing; verbose=false)
     config = JSON.parsefile(json_file)
     options_src = convertkeytosymbol(config["src"])
     options_dst = convertkeytosymbol(config["dst"])
     nb_added_edges = config["nb_added_edges"]
     seed = config["seed"]
     for (index, path) in enumerate(paths_matpower)
-        generate_decomposition(manager, path, options_src, options_dst, nb_added_edges, seed)
-        @info "[$rank] $index/$(length(paths_matpower))"
+        generate_decomposition(manager, path, options_src, options_dst, nb_added_edges; seed=seed, verbose=verbose)
+        verbose && @info "[$rank] $index/$(length(paths_matpower))"
     end
 end
 
-function generate_decomposition_all_mult(manager::ExperimentManager, json_file::String)
+function generate_decomposition_all_mult(manager::ExperimentManager, json_file::String; verbose=false)
     config = JSON.parsefile(json_file)
     for (key, val) in config
         options_src = convertkeytosymbol(val["src"])
         options_dst = convertkeytosymbol(val["dst"])
         nb_added_edges = val["nb_added_edges"]
         seed = val["seed"]
-        generate_decomposition_all(manager, options_src, options_dst, nb_added_edges, seed)
+        generate_decomposition_all(manager, options_src, options_dst, nb_added_edges; seed=seed, verbose=verbose)
     end
 end
 
-function generate_decomposition(manager::ExperimentManager, path, options_src, options_dst, nb_added_edges, seed=nothing)
+function generate_decomposition(manager::ExperimentManager, path, options_src, options_dst, nb_added_edges; seed=nothing, verbose=false)
     name = basename(path)[1:end - 2]
     graph = construct_network_graph(path)
     # Here we add the graph-specific argument we want to pass to the filters
@@ -100,13 +101,14 @@ function generate_decomposition(manager::ExperimentManager, path, options_src, o
                                             options_dst_features,
                                             nothing,
                                             features)
-        @warn "The decomposition ($name, $add_edges) hasn't be inserted to the database"
+        @warn "The decomposition ($name, $(length(added_edges))) hasn't be inserted to the database"
     else
         DecompositionDB.add_decomposition_in_instance!(manager.instances, name, added_edges)
+        verbose && @info "($name, $(length(added_edges))) inserted"
     end
 end
 
-function generate_cholesky_all(manager::ExperimentManager)
+function generate_cholesky_all(manager::ExperimentManager; verbose=false)
     paths_matpower = collect(DecompositionDB.getmatpowerpath_all(manager.instances))
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
     for path in paths_matpower
@@ -117,16 +119,17 @@ function generate_cholesky_all(manager::ExperimentManager)
         features = get_features_decomposition(graph, chordal_graph, nb_added_edges, cliques, cliquetree)
         if !DecompositionDB.push_decomposition!(manager.decompositions,
                                                 name,
-                                                [],
+                                                Vector{Vector{Int}}(undef, 0),
                                                 cliques,
                                                 cliquetree,
                                                 Dict(),
                                                 Dict(),
                                                 nothing,
                                                 features)
-            @warn "The decomposition ($name) hasn't be inserted to the database"
+            @warn "The decomposition ($name, $(length(added_edges))) hasn't be inserted to the database"
         else
-            DecompositionDB.add_decomposition_in_instance!(manager.instances, name, [])
+            DecompositionDB.add_decomposition_in_instance!(manager.instances, name, Vector{Vector{Int}}(undef, 0))
+            verbose && @info "$name CHOLESKY inserted."
         end
     end
 end
