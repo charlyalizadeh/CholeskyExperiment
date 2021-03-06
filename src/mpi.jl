@@ -73,7 +73,7 @@ end
 
 Solve decompositions using MPI.
 """
-function mpisolve(manager::ExperimentManager)
+function mpisolve(manager::ExperimentManager; cholesky=false)
     MPI.Init()
     comm = MPI.COMM_WORLD
     manager = ExperimentManager("mongodb://$(ARGS[1]):27017")
@@ -112,8 +112,10 @@ function mpisolve(manager::ExperimentManager)
     for (i, index) in enumerate(decompositions_index)
         instance_name = decompositions[index]["_id"]["instance_name"]
         added_edges::Vector{Vector{Int}} = decompositions[index]["_id"]["added_edges"]
-        solve_decomposition(manager, instance_name, added_edges)
-        @info "[$rank] $i / $(length(decompositions_index))"
+        if !(cholesky && length(added_edges) != 0)
+            solve_decomposition(manager, instance_name, added_edges, resolve=true)
+        end
+        @info "[$rank] $i / $(length(decompositions_index)): $(instance_name)"
     end
     MPI.Finalize()
 end
