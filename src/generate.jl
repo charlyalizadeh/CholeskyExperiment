@@ -108,6 +108,33 @@ function generate_decomposition(manager::ExperimentManager, path, options_src, o
     end
 end
 
+function generate_cholesky(manager::ExperimentManager, path; verbose=false)
+    name = basename(path)[1:end - 2]
+    graph = construct_network_graph(path)
+    # Here we add the graph-specific argument we want to pass to the filters
+    if DecompositionDB.isdecomposition(manager.decompositions, name, Vector{Vector{Int}}(undef, 0))
+        @warn "Decomposition already on database, cliques computation aborted"
+    end
+    cliques, nb_added_edges, chordal_graph = Generate.get_decomposition(graph)
+    cliquetree = Generate.get_cliquetree(cliques)
+    # Not nice
+    features = get_features_decomposition(graph, chordal_graph, nb_added_edges, cliques, cliquetree)
+    if !DecompositionDB.push_decomposition!(manager.decompositions,
+                                            name,
+                                            Vector{Vector{Int}}(undef, 0),
+                                            cliques,
+                                            cliquetree,
+                                            Dict(),
+                                            Dict(),
+                                            nothing,
+                                            features)
+        @warn "The decomposition ($name, []) hasn't be inserted to the database"
+    else
+        DecompositionDB.add_decomposition_in_instance!(manager.instances, name, Vector{Vector{Int}}(undef,0))
+        verbose && @info "$name CHOLESKY inserted."
+    end
+end
+
 function generate_cholesky_all(manager::ExperimentManager; verbose=false)
     paths_matpower = collect(DecompositionDB.getmatpowerpath_all(manager.instances))
     paths_matpower = [path["paths"]["matpower"] for path in paths_matpower]
@@ -126,7 +153,7 @@ function generate_cholesky_all(manager::ExperimentManager; verbose=false)
                                                 Dict(),
                                                 nothing,
                                                 features)
-            @warn "The decomposition ($name, $(length(added_edges))) hasn't be inserted to the database"
+            @warn "The decomposition ($name, []) hasn't be inserted to the database"
         else
             DecompositionDB.add_decomposition_in_instance!(manager.instances, name, Vector{Vector{Int}}(undef, 0))
             verbose && @info "$name CHOLESKY inserted."
