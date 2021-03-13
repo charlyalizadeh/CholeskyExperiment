@@ -30,8 +30,9 @@ end
 
 Export the features dataframe of `collection` in a csv file.
 """
-function export_features_df_to_csv(collection::Mongoc.Collection, path="./data/")
+function export_features_df_to_csv(collection::Mongoc.Collection, path="./data/"; recompute_keys=true)
     filepath = joinpath(path, "$(collection.name)_features.csv")
+    recompute_keys && Mongoc.drop(collection.database["$(collection.name)_keys"])
     df = DecompositionDB.getfeaturesdf(collection)
     symbnames = [Symbol(name) for name in names(df)]
     instance_name_index = findfirst(isequal(:instance_name), symbnames)
