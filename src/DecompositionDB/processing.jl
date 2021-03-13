@@ -60,11 +60,10 @@ See also [`getfeaturesdf`]
 """
 function getcolnamesdict(collection_keys::Mongoc.Collection, features_name::Vector{String}; collectiontype::Symbol=:name)
     collectiontype == :name && (collectiontype = getcollectiontype(collection_keys))
-    colnames = Dict(val => String[] for val in features_name)
-    colnames["instance_name"] = String[]
+    colnames = Dict(val => Vector{Union{Missing,String}}(undef,0) for val in features_name)
+    colnames["instance_name"] = Vector{Union{Missing,String}}(undef,0)
     if collectiontype == :decompositions
-        colnames = convert(Dict{String, Union{Vector{String}, Vector{Int}}}, colnames) # TODO: find another way to do this
-        colnames["nb_added_edges"] = Int[]
+        colnames["nb_added_edges"] = Vector{Union{Missing,String}}(undef,0)
     end
     return colnames
 end
@@ -84,6 +83,16 @@ function getcollectiontype(collection::Mongoc.Collection)
     end
 end
 
+function parsecolumns!(type::Type, df::DataFrame, exclude::Vector{String}=["solver.nb_iter", "solver.solving_time"])
+    for name in names(df)
+        name in exclude && continue
+        values = tryparse.(type, df[!,name])
+        if !(typeof(values) in [Array{Union{Nothing,type},1}, Array{Nothing,1}])
+            df[!,name] = values
+        end
+    end
+end
+
 
 """
     fillfeatures!(df::DataFrame, documents::Vector{AbstractDict}, features_name::Vector{String}, collectiontype::Symbol)
@@ -92,10 +101,13 @@ Populate `df` with the features of the documents in `documents`.
 """
 function fillfeatures!(df::DataFrame, documents::Vector{N}, features_name::Vector{String}, collectiontype::Symbol) where N<:AbstractDict
     for document in documents
-        features = collectiontype == :instances ?
-                        Dict("instance_name" => document["_id"]) :
-                        Dict("instance_name" => document["_id"]["instance_name"],
-                             "nb_added_edges" => length(document["_id"]["added_edges"]))
+        features = Dict{String,Union{String,Missing}}()
+        if collectiontype == :instances
+            features["instance_name"] = document["_id"]
+        else
+            features["instance_name"] = document["_id"]["instance_name"]
+            features["nb_added_edges"] = string(length(document["_id"]["added_edges"]))
+        end
         for feature_name in features_name
             feature = getfeature(document, feature_name)
             features[feature_name] = ismissing(feature) ? feature : string(feature)
@@ -104,6 +116,7 @@ function fillfeatures!(df::DataFrame, documents::Vector{N}, features_name::Vecto
     end
 end
 
+
 """
     getfeaturesdf(collection::Mongoc.Collection; collection_keys=collection.database["\$(collection.name)_keys"], collectiontype::Symbol=:name)
 
@@ -111,57 +124,24 @@ Build a dataframe from the "features" field in `collection`.
 """
 function getfeaturesdf(collection::Mongoc.Collection; collection_keys=collection.database["$(collection.name)_keys"], collectiontype::Symbol=:name)
     isempty(collection_keys) && computefeatureskeys(collection)
-    print(collection)
     collectiontype == :name && (collectiontype = getcollectiontype(collection_keys))
     features_name = [feature["_id"] for feature in collection_keys]
     colnames = getcolnamesdict(collection_keys, features_name, collectiontype=collectiontype)
     df = DataFrame(colnames)
     allowmissing!(df)
     fillfeatures!(df, collect(collection), features_name, collectiontype)
+    types = eltype.(eachcol(df))
+    parsecolumns!(Float64, df)
     return df
 end
 
 """
-TODO: Under development
-"""
-function build_features_stats_collection(collection::Mongoc.Collection, compute_key::Bool=true)
-    if compute_key
-        compute_features_keys(collection)
-    end
-    collection_keys = collection.database["$(collection.name)_keys"]
-    features_name = [feature["_id"] for feature in collection_keys]
-    accumulators = ""
-    for (index, key) in enumerate(features_name)
-        accumulator_name = replace(key, "." => "_")
-        accumulators = string(accumulators, """"$(accumulator_name)" : { "\$stdDevPop": "\$features.$(key)" }""")
-        if index < length(features_name)
-            accumulators = string(accumulators, ",")
-        end
-    end
-    aggregation = Mongoc.BSON("""[
-            { "\$group" : {
-                "_id": "\$_id.instance_name",
-                $(accumulators)
-            }}
-        ]""")
-    stats_collection = collection.database["$(collection.name)_stats"]
-    for d in Mongoc.aggregate(collection, aggregation)
-        push!(stats_collection, d)
-    end
-end
+    get_df_features_std(collection::Mongoc.Collection)
 
-"""
-TODO: Under development
+Return a dataframe where each row is an instance and each column represents a feature standard devieation.
 """
 function get_df_features_std(collection::Mongoc.Collection)
-    df = get_features_df(collection)
-    std_df = DataFrame()
-    for name in names(df)
-        name = Symbol(name)
-        name == Symbol("instance_name") && continue
-        df[!,name] = parse.(Float64,df[!,name])
-        df[:, name] = map(x -> (x - minimum(df[:, name])) / (maximum(df[:, name]) - minimum(df[:, name])), df[:, name])
-        std_df[:, name] = [std(df[:, name])]
-    end
-    return std_df
+    df = getfeaturesdf(collection)
+    colnames = filter(col -> typeof(df[!,col]) == Vector{Float64},  names(df))
+    combine(groupby(df, :instance_name), colnames .=> std) 
 end
