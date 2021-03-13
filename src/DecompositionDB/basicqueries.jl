@@ -244,17 +244,24 @@ function getmatpowerpath_all(collection::Mongoc.Collection)
     return Mongoc.find(collection, Mongoc.BSON(); options=Mongoc.BSON("projection" => Mongoc.BSON("paths.matpower" => true)))
 end
 
-"""
-    getunsolved_index(collection::Mongoc.Collection)
-
-Get the index in the collect(collection) array of all unsolved decomposition.
-"""
-function getunsolved_index(collection::Mongoc.Collection)::Vector{Int}
+function getdecompositions_index(collection::Mongoc.Collection; unsolved=true, cholesky=false)::Vector{Int}
     indexes = []
     for (index, document) in enumerate(collection)
-        if !haskey(document["features"], "solver") || !haskey(document["features"]["solver"], "solving_time")
+        ischolesky = length(document["_id"]["added_edges"]) == 0
+        isunsolved = !haskey(document["features"], "solver") || !haskey(document["features"]["solver"], "solving_time")
+        if (cholesky == ischolesky) && (unsolved == isunsolved)
             push!(indexes, index)
         end
     end
     return indexes
 end
+
+function getcholeskytime(collection::Mongoc.Collection, instance_name::String)
+    query = Mongoc.BSON("_id.instance_name" => instance_name, "_id.added_edges" => Mongoc.BSON("\$size" => 0))
+    options = Mongoc.BSON("projection" => Mongoc.BSON("features.solver.solving_time" => true))
+    decomposition = Mongoc.find_one(collection, query; options=options)
+    if decomposition != nothing
+        return decomposition["features"]["solver"]["solving_time"]
+    end
+end
+
