@@ -41,6 +41,10 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
         @info "[$rank] Tasks: $size"
         @info "[$rank] Instance(s: $(length(paths_matpower))"
         @info "[$rank] Instance(s by taks: $(nb_instance_by_task)"
+        if length(paths_matpower) < size
+            size = length(paths_matpower)
+            nb_instance_by_task = 1
+        end
         for i in 1:size
             start = (i - 1) * nb_instance_by_task + 1
             if i == size
@@ -64,7 +68,7 @@ function mpigenerate(manager::ExperimentManager, configfile::String="./config.js
     MPI.Irecv!(paths_matpower_index, 0, 0, comm)
     start, stop = paths_matpower_index
     @info "[$rank] Generating..."
-    generate_decomposition_mult(manager, configfile, paths_matpower[start:stop], rank)
+    generate_decomposition_mult(manager, configfile, paths_matpower[start:stop], rank; verbose=true)
     MPI.Finalize()
 end
 
@@ -73,7 +77,7 @@ end
 
 Solve decompositions using MPI.
 """
-function mpisolve(manager::ExperimentManager; cholesky=false)
+function mpisolve(manager::ExperimentManager; resolve=false, cholesky=false)
     MPI.Init()
     comm = MPI.COMM_WORLD
     manager = ExperimentManager("mongodb://$(ARGS[1]):27017")
@@ -84,38 +88,44 @@ function mpisolve(manager::ExperimentManager; cholesky=false)
     # Send data to all other comm
     if rank == root
         @info "[$rank] Spliting resolution between the tasks"
-        decompositions_index = DecompositionDB.getunsolved_index(manager.decompositions)
-        nb_decomposition_unsolved = length(decompositions_index)
-        nb_decomposition_by_task = trunc(Int, nb_decomposition_unsolved / size)
+        decompositions_index = DecompositionDB.getdecompositions_index(manager.decompositions; unsolved=!resolve, cholesky=cholesky)
+        nb_decomposition = length(decompositions_index)
+        nb_decomposition_by_task = trunc(Int, nb_decomposition/ size)
         @info "[$rank]    Tasks: $size"
-        @info "[$rank]    Decomposition(s): $nb_decomposition_unsolved"
+        @info "[$rank]    Decomposition(s): $nb_decomposition"
+        if length(decompositions_index) < size
+            size = length(decompositions_index)
+            nb_instance_by_task = 1
+        end
         @info "[$rank]    Decomposition(s) by taks: $nb_decomposition_by_task"
         for i in 1:size
             start = (i - 1) * nb_decomposition_by_task + 1
             stop = i * nb_decomposition_by_task
-            stop = stop > nb_decomposition_unsolved ? nb_decomposition_unsolved : stop
+            stop = stop > nb_decomposition ? nb_decomposition : stop
+            if i == size
+                stop = nb_decomposition
+            end
             @info typeof(decompositions_index)
+            @info "[$rank] [$(i - 1)]: $start -> $stop"
             MPI.Isend(decompositions_index[start:stop], i - 1, 0, comm)
         end
     end
-    MPI.Barrier(comm)
-
-    @info "[$rank] Retrieving number of decompositions"
+    #@info "[$rank] Retrieving number of decompositions"
     status = MPI.Probe(0, 0, comm)
     count = MPI.Get_count(status, Int)
-    @info "[$rank] Count: $count"
+    #@info "[$rank] Count: $count"
     decompositions_index = Array{Int}(undef, count)
-    @info "[$rank] Retrieving decompositions indexes"
+    #@info "[$rank] Retrieving decompositions indexes"
     MPI.Irecv!(decompositions_index, 0, 0, comm)
     decompositions = collect(manager.decompositions)
-    @info "[$rank] Solving..."
+    #@info "[$rank] Solving..."
     for (i, index) in enumerate(decompositions_index)
         instance_name = decompositions[index]["_id"]["instance_name"]
         added_edges::Vector{Vector{Int}} = decompositions[index]["_id"]["added_edges"]
-        if !(cholesky && length(added_edges) != 0)
-            solve_decomposition(manager, instance_name, added_edges, resolve=true)
-        end
-        @info "[$rank] $i / $(length(decompositions_index)): $(instance_name)"
+        @info "[$rank] Solving $(instance_name): $(length(added_edges))"
+        solve_decomposition(manager, instance_name, added_edges, true, resolve=resolve)
+        @info "[$rank] $i / $(length(decompositions_index)) $(instance_name): $(length(added_edges)) solved."
     end
+    MPI.Barrier(comm)
     MPI.Finalize()
 end
