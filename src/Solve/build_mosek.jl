@@ -1,3 +1,5 @@
+using Dates
+
 function treat_constants(MATRICES_with_CONSTANTS, CONSTRAINTS)
     #find constant rows
     index_none_column2 = findall(x -> x == "NONE", MATRICES_with_CONSTANTS[:,2])
@@ -27,17 +29,6 @@ function create_list_of_variables_per_block(BLOCKS)
         block = BLOCKS[line,1]
         var = BLOCKS[line,2]
         block_var[block] = union(block_var[block],Set{String}([var]))
-    end
-    for line=1:size(BLOCKS,1)
-        values = block_var[ BLOCKS[line,1] ]
-        print_value = []
-        for v in values
-            t = split(v,"_")[2]
-            if !(t in print_value)
-                push!(print_value, t)
-            end
-        end
-        println(print_value)
     end
     return block_var
 end
@@ -155,11 +146,14 @@ function creating_and_solving_model(DIFFERENT_VAR, NB_BLOCKS, DIFFERENT_BLOCKS, 
     for ctr_type in list_of_constraint_types(m)
         println("nb constraints type $ctr_type primal : ", num_constraints(m, ctr_type[1], ctr_type[2]))
     end
-    # print(m)
-    #MOI.set(m, MOI.RawParameter("TimeLimit"), time_limit)
+    @info "Setting time limit to: $time_limit"
     set_time_limit_sec(m, time_limit)
+    start_time = Dates.now()
+    @info "Starting at: $(start_time)"
     val, time, bytes, gctime, memallocs = @timed optimize!(m)
-    # MOI.write_to_file(backend(m).optimizer.model, "dump.task.gz")
+    end_time = Dates.now()
+    elapsed = Dates.value(end_time - start_time) * 0.001
+    @info "Ending at: $(end_time). Elapsed: $(elapsed) seconds"
     mem = bytes*10^(-6)
     println("Status : ", JuMP.termination_status(m))
     println("Julia resolution time : ", time)
@@ -204,12 +198,8 @@ function sdp_model_solver_to_specify(cliques,
     println("\n NB BLOCKS = $NB_BLOCKS \n")
     my_timer = @elapsed block_var = create_list_of_variables_per_block(BLOCKS)
     @printf("%-35s%10.6f s\n", "create_list_of_variables_per_block", my_timer)
-    #for i in MATRICES
-    #  println(i)
-    #end
     @debug "    Create and solve model"
     my_timer= @elapsed (Xoptimal,obj,status, time, mem) = creating_and_solving_model(DIFFERENT_VAR, NB_BLOCKS, DIFFERENT_BLOCKS, block_var, CLIQUE_TREE, CONSTRAINTS, MATRICES, constants_per_objconstraint, my_solver, objscale, time_limit)
-    #return S, Xoptimal, y
     @printf("%-35s%10.6f s\n", "creating_and_solving_model", my_timer)
     return Xoptimal, obj, status, time, mem
 end
