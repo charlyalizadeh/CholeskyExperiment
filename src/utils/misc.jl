@@ -1,5 +1,6 @@
 using LightGraphs: degree, vertices, rem_vertex!
 using DelimitedFiles
+using DataFrames
 
 """
 source: https://discourse.julialang.org/t/get-the-argument-names-of-an-function/32902/3
@@ -98,4 +99,14 @@ function convertkeytosymbol(dict)
         end
     end
     return symboldict
+end
+
+function parsecolumns!(type::Type, df::DataFrame, exclude::Vector{String}=["solver.nb_iter", "solver.solving_time"])
+    for name in names(df)
+        name in exclude && continue
+        values = tryparse.(type, df[!,name])
+        if !(typeof(values) in [Array{Union{Nothing,type},1}, Array{Nothing,1}])
+            df[!,name] = values
+        end
+    end
 end

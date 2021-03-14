@@ -11,6 +11,7 @@ include("DecompositionDB/DecompositionDB.jl")
 include("Generate/Generate.jl")
 include("Solve/Solve.jl")
 include("ReadFeatures/ReadFeatures.jl")
+include("VisualizeFeatures/VisualizeFeatures.jl")
 include("utils/chordalextension.jl")
 include("utils/constructgraph.jl")
 include("utils/misc.jl")
@@ -34,11 +35,12 @@ function ExperimentManager(port::String="mongodb://localhost:27017")
     return ExperimentManager(instances, decompositions)
 end
 
-include("./getfeatures.jl")
+include("./readfeatures.jl")
 include("./loadinstance.jl")
 include("./generate.jl")
 include("./solve.jl")
 include("./mpi.jl")
+include("./visualizefeatures.jl")
 
 
 end # module
